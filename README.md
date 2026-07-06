@@ -27,6 +27,18 @@ Requirements: Node 20+, a webcam, and a reasonably recent GPU. Chrome/Edge recom
 | `F` | Fullscreen |
 | `D` | Tracking debug overlay |
 
+## Developing
+
+```
+npm test           # unit tests (Vitest)
+npm run typecheck
+```
+
+No webcam handy? Open `http://localhost:5173/?sim` — a synthetic player drives
+the visuals so you can develop effects anywhere. In dev builds, press `J` while
+tracking live to record your own landmark session; drop the downloaded JSON
+into `public/fixtures/` and replay it with `?sim=<name>`.
+
 ## Tips
 
 - More light on your hands = shorter webcam exposure = less motion blur and lower latency.

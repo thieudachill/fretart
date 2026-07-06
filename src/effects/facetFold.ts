@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { FrameFeatures, HandFeatures } from '../core/types';
+import { centroid, foldQuad, keyLightShade, maxRadius, sortAroundCentroid, type Pt3 } from '../core/geometry';
 import { EffectBase, type EngineContext } from './Effect';
 import { PRINT_HELPERS, PRINT_UNIFORMS } from './shaders/print';
 
@@ -297,19 +298,11 @@ export class FacetFoldEffect extends EffectBase {
   private buildHand(hand: HandFeatures, h: number, dt: number): void {
     // The 4 playing fingertips (index..pinky) — the thumb-free quad.
     const pts = [hand.tips[1], hand.tips[2], hand.tips[3], hand.tips[4]];
-    let cx = 0;
-    let cy = 0;
-    for (const p of pts) {
-      cx += p.x / 4;
-      cy += p.y / 4;
-    }
-    const ord = [...pts]
-      .sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx))
-      .map((p) => ({ x: p.x, y: p.y, z: 0 }));
+    const c = centroid(pts);
+    const ord: Pt3[] = sortAroundCentroid(pts, c).map((p) => ({ x: p.x, y: p.y, z: 0 }));
 
     // Spread of the quad drives the relief: pinch flattens, spread raises.
-    let spread = 0;
-    for (const p of ord) spread = Math.max(spread, Math.hypot(p.x - cx, p.y - cy));
+    const spread = maxRadius(ord, c);
     const drive = this.p('spreadDrive') > 0.5 ? Math.min(2, spread / 0.22) : 1;
     const target = this.p('apex') * drive;
     this.apexSmooth[h] += (target - this.apexSmooth[h]) * Math.min(1, dt * 8);
@@ -320,17 +313,14 @@ export class FacetFoldEffect extends EffectBase {
 
     if (this.p('mode') < 0.5) {
       // Fold-2: split along the shorter diagonal, lift the ridge.
-      const d0 = Math.hypot(ord[0].x - ord[2].x, ord[0].y - ord[2].y);
-      const d1 = Math.hypot(ord[1].x - ord[3].x, ord[1].y - ord[3].y);
-      const [a, b, c, d] =
-        d0 <= d1 ? [ord[0], ord[1], ord[2], ord[3]] : [ord[1], ord[2], ord[3], ord[0]];
+      const [a, b, c2, d] = foldQuad(ord);
       a.z = apex;
-      c.z = apex;
-      this.pushFacet([a, b, c], 0, alpha, energy);
-      this.pushFacet([a, c, d], 1, alpha, energy);
+      c2.z = apex;
+      this.pushFacet([a, b, c2], 0, alpha, energy);
+      this.pushFacet([a, c2, d], 1, alpha, energy);
     } else {
       // Pyramid-4: centroid apex, four side facets.
-      const top = { x: cx, y: cy, z: apex };
+      const top = { x: c.x, y: c.y, z: apex };
       for (let i = 0; i < 4; i++) {
         this.pushFacet([top, ord[i], ord[(i + 1) % 4]], i, alpha, energy);
       }
@@ -343,27 +333,7 @@ export class FacetFoldEffect extends EffectBase {
     alpha: number,
     energy: number,
   ): void {
-    // Fake normal in aspect-corrected space; one key light from upper-left.
-    const ax = tri[0].x * this.aspect;
-    const bx = tri[1].x * this.aspect;
-    const cx = tri[2].x * this.aspect;
-    const ux = bx - ax;
-    const uy = tri[1].y - tri[0].y;
-    const uz = tri[1].z - tri[0].z;
-    const vx = cx - ax;
-    const vy = tri[2].y - tri[0].y;
-    const vz = tri[2].z - tri[0].z;
-    let nx = uy * vz - uz * vy;
-    let ny = uz * vx - ux * vz;
-    let nz = ux * vy - uy * vx;
-    if (nz < 0) {
-      nx = -nx;
-      ny = -ny;
-      nz = -nz;
-    }
-    const nl = Math.hypot(nx, ny, nz) || 1;
-    const d = (nx * -0.45 + ny * -0.55 + nz * 0.7) / nl;
-    const shade = Math.max(0, Math.min(1, (d + 1) / 2));
+    const shade = keyLightShade(tri, this.aspect);
     this.frame.push({ tri, shade, alpha, energy, handFacet });
   }
 

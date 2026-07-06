@@ -28,6 +28,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview",
     "postinstall": "node scripts/setup-assets.mjs"
   },
@@ -39,7 +41,9 @@
   "devDependencies": {
     "@tweakpane/core": "^2.0.5",
     "@types/three": "^0.180.0",
+    "happy-dom": "^20.10.6",
     "typescript": "^5.9.2",
-    "vite": "^7.1.0"
+    "vite": "^7.1.0",
+    "vitest": "^4.1.10"
   }
 }

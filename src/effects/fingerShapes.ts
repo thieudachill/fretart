@@ -3,6 +3,7 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import type { FrameFeatures, Vec2 } from '../core/types';
+import { centroid, sampleClosedCatmullRom, sortAroundCentroid, type Pt2 } from '../core/geometry';
 import { EffectBase, type EngineContext } from './Effect';
 import { PRINT_HELPERS, PRINT_UNIFORMS } from './shaders/print';
 
@@ -132,7 +133,7 @@ export class FingerShapesEffect extends EffectBase {
   private dotsMat!: THREE.ShaderMaterial;
 
   private points: Vec2[] = [];
-  private curveSamples: THREE.Vector3[] = [];
+  private curveSamples: Pt2[] = [];
 
   constructor() {
     super();
@@ -264,23 +265,12 @@ export class FingerShapesEffect extends EffectBase {
   private buildCurve(): void {
     // Order fingertips by angle around their centroid so the closed curve
     // wraps them into one coherent silhouette instead of self-crossing.
-    let cx = 0;
-    let cy = 0;
-    for (const p of this.points) {
-      cx += p.x;
-      cy += p.y;
-    }
-    cx /= this.points.length;
-    cy /= this.points.length;
-    const ordered = [...this.points].sort(
-      (a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx),
-    );
+    const c = centroid(this.points);
+    const ordered = sortAroundCentroid(this.points, c);
 
     const smooth = this.p('smooth');
     const breathe = this.p('breathe');
-    const controls = ordered.map((p) => new THREE.Vector3(p.x, p.y, 0));
-    const curve = new THREE.CatmullRomCurve3(controls, true, 'catmullrom', 0.1 + smooth * 0.7);
-    this.curveSamples = curve.getPoints(SAMPLES - 1);
+    this.curveSamples = sampleClosedCatmullRom(ordered, SAMPLES, 0.1 + smooth * 0.7);
 
     // Gentle organic wobble so a held shape still feels alive (Lieberman's
     // sketches breathe even at rest), plus optional high-frequency waviness
@@ -289,7 +279,7 @@ export class FingerShapesEffect extends EffectBase {
     if (breathe > 0 || waviness > 0) {
       for (let i = 0; i < this.curveSamples.length; i++) {
         const s = this.curveSamples[i];
-        const angle = Math.atan2(s.y - cy, s.x - cx);
+        const angle = Math.atan2(s.y - c.y, s.x - c.x);
         const slow =
           Math.sin(angle * 3 + this.time * 1.8) * 0.35 + Math.sin(angle * 5 - this.time * 1.2) * 0.2;
         const fast =

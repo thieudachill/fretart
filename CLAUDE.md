@@ -10,10 +10,18 @@ rendering of the live feed).
 ```
 npm run dev        # http://localhost:5173 — grant webcam access
 npm run typecheck
+npm test           # Vitest; co-located *.test.ts, shared doubles in src/test/fakes.ts
 npm run build
 ```
 
-Hotkeys: `H` hide UI (filming mode) · `F` fullscreen · `D` tracking debug overlay.
+Hotkeys: `H` hide UI (filming mode) · `F` fullscreen · `D` tracking debug overlay
+· `J` (dev builds only) record a landmark fixture for sim mode.
+
+**Sim mode:** `?sim` runs the app without a webcam — `src/tracking/sim.ts`
+substitutes a deterministic synthetic player (canvas stream stands in for the
+video). `?sim=<name>` replays `public/fixtures/<name>.json` recorded with `J`.
+TDD rule: pure logic gets a failing test first; GPU/visual code gets manual
+verification + sim mode instead.
 
 ## Architecture (data flows one way)
 
@@ -27,6 +35,11 @@ camera.ts → handTracker.ts → features.ts → modMatrix.ts → engine.ts (eff
   pinch distances, spread, presence envelope). Renderer-agnostic; future
   chord/note detection, MIDI/OSC, or audio-reactive modules consume this too.
   `FEATURE_SOURCES` is the registry of named 0..1 signals the mod matrix can route.
+- `src/core/geometry.ts` — pure, unit-tested math the effects share: centroid,
+  angle-sort-around-centroid, max-radius (spread), fold-2 quad split, key-light
+  shade, and a closed Catmull-Rom sampler that reproduces three.js's
+  `CatmullRomCurve3` exactly (the test compares them directly). Effects should
+  stay thin rendering shells; put new geometry here with tests.
 - `src/effects/Effect.ts` — every visual is an `EffectBase` subclass with a
   `paramDefs` schema (drives Tweakpane UI + mod-matrix targets automatically).
   Effects render in chain order over ping-pong render targets; each is
