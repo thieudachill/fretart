@@ -1,5 +1,5 @@
 import { Pane } from 'tweakpane';
-import type { FolderApi } from 'tweakpane';
+import type { ButtonApi, FolderApi } from 'tweakpane';
 import { PALETTE_OPTIONS } from '../core/types';
 import type { Engine } from '../core/engine';
 import { Camera } from '../input/camera';
@@ -34,6 +34,13 @@ export class Panel {
   private presetBinding = { preset: '', name: 'my preset' };
   private trackingBinding = { response: 0.5, anticipate: 30 };
   private audioBinding = { listen: false, device: '', sensitivity: 1 };
+  private recBinding: { fps: number; quality: 'share' | 'master'; audio: boolean } = {
+    fps: 60,
+    quality: 'share',
+    audio: true,
+  };
+  private recButton!: ButtonApi;
+  private recTimer = 0;
 
   constructor(private deps: PanelDeps) {
     this.pane = new Pane({ title: 'FRETART' });
@@ -186,21 +193,63 @@ export class Panel {
       });
   }
 
+  /**
+   * A recording is the performance — image and sound. Options are device/
+   * delivery choices, so they persist like tracking feel, outside presets.
+   */
   private buildRecording(): void {
-    const { recorder, engine } = this.deps;
-    const btn = this.pane.addButton({ title: '● Start recording' });
-    const indicator = document.getElementById('rec-indicator')!;
-    btn.on('click', () => {
-      if (recorder.recording) {
-        recorder.stop();
-        btn.title = '● Start recording';
-        indicator.classList.remove('on');
-      } else {
-        recorder.start(engine.canvas);
-        btn.title = '■ Stop & save';
-        indicator.classList.add('on');
+    const { recorder } = this.deps;
+    const stored = localStorage.getItem('fretart.recording.v1');
+    if (stored) {
+      try {
+        Object.assign(this.recBinding, JSON.parse(stored));
+      } catch {
+        // Corrupt entry — fall back to defaults.
       }
-    });
+    }
+    const persist = () => {
+      Object.assign(recorder.options, this.recBinding);
+      localStorage.setItem('fretart.recording.v1', JSON.stringify(this.recBinding));
+    };
+    persist();
+
+    const f = this.pane.addFolder({ title: 'Recording', expanded: false });
+    f.addBinding(this.recBinding, 'fps', { label: 'fps', options: { '30': 30, '60': 60 } })
+      .on('change', persist);
+    f.addBinding(this.recBinding, 'quality', {
+      label: 'quality',
+      options: { 'share (8 Mbps)': 'share', 'master (24 Mbps)': 'master' },
+    }).on('change', persist);
+    f.addBinding(this.recBinding, 'audio', { label: 'record sound (mic)' }).on('change', persist);
+    this.recButton = f.addButton({ title: '● Start recording (R)' });
+    this.recButton.on('click', () => this.toggleRecording());
+    f.addButton({ title: 'Snapshot PNG (S)' }).on('click', () => this.snapshot());
+  }
+
+  /** One code path for the button and the R hotkey, so they never disagree. */
+  toggleRecording(): void {
+    const { recorder, engine, audio, presets } = this.deps;
+    const indicator = document.getElementById('rec-indicator')!;
+    const time = document.getElementById('rec-time');
+    if (recorder.recording) {
+      recorder.stop();
+      this.recButton.title = '● Start recording (R)';
+      indicator.classList.remove('on');
+      clearInterval(this.recTimer);
+    } else {
+      recorder.start(engine.canvas, audio.audioTrack, presets.currentName);
+      this.recButton.title = '■ Stop & save (R)';
+      indicator.classList.add('on');
+      if (time) time.textContent = '0:00';
+      this.recTimer = window.setInterval(() => {
+        const s = Math.floor(recorder.elapsed);
+        if (time) time.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      }, 250);
+    }
+  }
+
+  snapshot(): void {
+    this.deps.recorder.snapshot(this.deps.engine.canvas, this.deps.presets.currentName);
   }
 
   private buildEffects(): void {

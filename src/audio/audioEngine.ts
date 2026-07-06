@@ -44,6 +44,11 @@ export class AudioEngine {
     return this.analyser !== null;
   }
 
+  /** Raw mic track for the recorder to mux; null while not listening. */
+  get audioTrack(): MediaStreamTrack | null {
+    return this.stream?.getAudioTracks()[0] ?? null;
+  }
+
   async start(deviceId?: string): Promise<void> {
     this.stop();
     this.stream = await navigator.mediaDevices.getUserMedia({

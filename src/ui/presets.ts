@@ -309,6 +309,9 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
 };
 
 export class PresetStore {
+  /** Name of the last loaded/saved preset — recordings are named after it. */
+  currentName = '';
+
   constructor(
     private engine: Engine,
     private matrix: ModMatrix,
@@ -373,12 +376,14 @@ export class PresetStore {
     const all = this.readStorage();
     all[name] = this.capture();
     this.writeStorage(all);
+    this.currentName = name;
   }
 
   load(name: string): boolean {
     const preset = BUILT_IN_PRESETS[name] ?? this.readStorage()[name];
     if (!preset) return false;
     this.apply(preset);
+    this.currentName = name;
     return true;
   }
 

@@ -116,6 +116,10 @@ async function boot(): Promise<void> {
     } else if (key === 'd') {
       overlay.visible = !overlay.visible;
       panel.refresh();
+    } else if (key === 'r') {
+      panel.toggleRecording();
+    } else if (key === 's') {
+      panel.snapshot();
     } else if (key === 'j' && import.meta.env.DEV && tracker) {
       // Dev-only: capture the live landmark stream into a sim fixture
       // (drop the downloaded JSON into public/fixtures/, replay via ?sim=name).
@@ -130,7 +134,7 @@ async function boot(): Promise<void> {
   });
 
   splash.classList.add('hidden');
-  hud.textContent = 'H hide UI · F fullscreen · D tracking overlay';
+  hud.textContent = 'H hide UI · F fullscreen · D overlay · R record · S snapshot';
 
   // Main loop.
   let lastTime = performance.now();

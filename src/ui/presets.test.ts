@@ -125,6 +125,17 @@ describe('PresetStore', () => {
     expect(store.load('does not exist')).toBe(false);
   });
 
+  it('remembers the current preset name for recordings, ignoring failed loads', () => {
+    expect(store.currentName).toBe('');
+    store.save('My Look');
+    expect(store.currentName).toBe('My Look');
+    store.load('does not exist');
+    expect(store.currentName).toBe('My Look'); // a failed load changes nothing
+    const builtIn = Object.keys(BUILT_IN_PRESETS)[0];
+    store.load(builtIn);
+    expect(store.currentName).toBe(builtIn);
+  });
+
   it('survives corrupted localStorage', () => {
     localStorage.setItem('fretart.presets.v1', '{not json');
     expect(store.listNames()).toEqual(Object.keys(BUILT_IN_PRESETS));

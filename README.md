@@ -26,6 +26,8 @@ Requirements: Node 20+, a webcam, and a reasonably recent GPU. Chrome/Edge recom
 | `H` | Hide UI (filming mode) |
 | `F` | Fullscreen |
 | `D` | Tracking debug overlay |
+| `R` | Start / stop recording |
+| `S` | Save a PNG snapshot |
 
 ## Developing
 
@@ -43,7 +45,12 @@ into `public/fixtures/` and replay it with `?sim=<name>`.
 
 - More light on your hands = shorter webcam exposure = less motion blur and lower latency.
 - The "Tracking feel" panel folder tunes responsiveness to your setup.
-- Recording outputs WebM; convert with `ffmpeg -i clip.webm -c:v libx264 -crf 18 clip.mp4`.
+- Recording captures picture *and* your guitar: turn on "Audio (mic) → listen"
+  and the mic track is muxed into the file. Where the browser supports it you
+  get mp4 (H.264+AAC) directly; otherwise WebM — convert with
+  `ffmpeg -i clip.webm -c:v libx264 -crf 18 clip.mp4`.
+- Recording options (fps, quality, record sound) live in the panel's
+  "Recording" folder and persist across sessions.
 
 ## Credits
 

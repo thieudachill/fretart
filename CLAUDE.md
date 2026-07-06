@@ -15,7 +15,8 @@ npm run build
 ```
 
 Hotkeys: `H` hide UI (filming mode) · `F` fullscreen · `D` tracking debug overlay
-· `J` (dev builds only) record a landmark fixture for sim mode.
+· `R` record · `S` PNG snapshot · `J` (dev builds only) record a landmark
+fixture for sim mode.
 
 **Sim mode:** `?sim` runs the app without a webcam — `src/tracking/sim.ts`
 substitutes a deterministic synthetic player (canvas stream stands in for the
@@ -148,8 +149,15 @@ the preferred direction.
 - Landmarks are mapped through the same cover-crop transform (`Engine.view`)
   the base video pass uses; screen space is normalized 0..1, y down.
 - Recording (`recorder.ts`) captures only the WebGL canvas — the debug overlay
-  and UI live outside it on purpose. Output is WebM; convert with
-  `ffmpeg -i clip.webm -c:v libx264 -crf 18 clip.mp4`.
+  and UI live outside it on purpose — muxed with the mic track when the mic is
+  listening and "record sound" is on. Codec is runtime-detected: mp4
+  (H.264+AAC) where `MediaRecorder.isTypeSupported` allows it, WebM otherwise
+  (convert: `ffmpeg -i clip.webm -c:v libx264 -crf 18 clip.mp4`). Files are
+  named `fretart-<preset>-<timestamp>.<ext>` via `PresetStore.currentName`.
+  Options (fps 30/60, share/master bitrate, record sound) persist in
+  `fretart.recording.v1` — device state, outside presets. `R` toggles,
+  `S` saves a PNG (`preserveDrawingBuffer` is already on for captureStream).
+  `Panel.toggleRecording()` is the single code path for button + hotkey.
 
 ## Planned (not built)
 
