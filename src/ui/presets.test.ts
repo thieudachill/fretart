@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { BUILT_IN_PRESETS, PresetStore, type PresetData } from './presets';
+import {
+  BUILT_IN_PRESETS,
+  FALLBACK_CATEGORY,
+  PRESET_CATEGORIES,
+  PresetStore,
+  categoryOf,
+  type PresetData,
+} from './presets';
 import { ModMatrix } from '../mapping/modMatrix';
 import { FakeEffect } from '../test/fakes';
 import type { Engine } from '../core/engine';
@@ -147,5 +154,77 @@ describe('PresetStore', () => {
     for (const name of Object.keys(BUILT_IN_PRESETS)) {
       expect(store.load(name), name).toBe(true);
     }
+  });
+
+  // ---- Schema v2: categories ----
+
+  it('tolerates v1 preset data with no category (old export files)', () => {
+    const v1: PresetData = {
+      global: { mirror: true, videoOpacity: 1, paletteIndex: 0 },
+      effects: { alpha: { enabled: true, values: { amt: 0.5 } } },
+      routings: [],
+    };
+    expect(() => store.apply(v1)).not.toThrow();
+    expect(categoryOf(v1)).toBe(FALLBACK_CATEGORY);
+  });
+
+  it('rejects unknown categories back to the fallback', () => {
+    const odd = { category: 'Vaporwave' } as unknown as PresetData;
+    expect(categoryOf(odd)).toBe(FALLBACK_CATEGORY);
+  });
+
+  it('saves inherit the category of the preset they were tweaked from', () => {
+    const [name, data] = Object.entries(BUILT_IN_PRESETS)[0];
+    store.load(name);
+    store.save('My Tweak');
+    const stored = JSON.parse(localStorage.getItem('fretart.presets.v2') ?? '{}') as Record<
+      string,
+      PresetData
+    >;
+    expect(categoryOf(stored['My Tweak'])).toBe(categoryOf(data));
+  });
+
+  it('migrates v1 localStorage saves to v2 with the fallback category', () => {
+    const v1Saves = {
+      'Old Look': {
+        global: { mirror: true, videoOpacity: 0.8, paletteIndex: 1 },
+        effects: { alpha: { enabled: true, values: { amt: 1.2 } } },
+        routings: [],
+      },
+    };
+    localStorage.setItem('fretart.presets.v1', JSON.stringify(v1Saves));
+    expect(store.listNames()).toContain('Old Look');
+    expect(store.load('Old Look')).toBe(true);
+    expect(fxA.values.amt).toBe(1.2);
+    // Migration is one-way: v2 now owns the data, the v1 key is gone.
+    const v2 = JSON.parse(localStorage.getItem('fretart.presets.v2') ?? '{}') as Record<
+      string,
+      PresetData
+    >;
+    expect(categoryOf(v2['Old Look'])).toBe(FALLBACK_CATEGORY);
+    expect(localStorage.getItem('fretart.presets.v1')).toBeNull();
+  });
+
+  it('does not re-run migration once v2 storage exists', () => {
+    store.save('Fresh');
+    localStorage.setItem('fretart.presets.v1', '{"Ghost": {}}');
+    expect(store.listNames()).not.toContain('Ghost');
+  });
+
+  it('groups presets by category in canonical order, user saves after built-ins', () => {
+    const [firstBuiltIn] = Object.entries(BUILT_IN_PRESETS)[0];
+    store.load(firstBuiltIn);
+    store.save('Aardvark Tweak'); // alphabetically first, but a user save
+    const grouped = store.byCategory();
+    expect(Object.keys(grouped)).toEqual(
+      PRESET_CATEGORIES.filter((c) => grouped[c] && grouped[c].length > 0),
+    );
+    const cat = categoryOf(BUILT_IN_PRESETS[firstBuiltIn]);
+    const names = grouped[cat]!;
+    expect(names).toContain('Aardvark Tweak');
+    expect(names.indexOf('Aardvark Tweak')).toBeGreaterThan(names.indexOf(firstBuiltIn));
+    // Every listed name is loadable and every preset is listed exactly once.
+    const all = Object.values(grouped).flat();
+    expect(all.sort()).toEqual(store.listNames().sort());
   });
 });

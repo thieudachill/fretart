@@ -60,9 +60,17 @@ audio/audioEngine.ts ─────────────↗ (FrameFeatures.a
   echo last, so feedback smears the whole composite.
 - `src/mapping/modMatrix.ts` — routes features to params as *additive offsets*
   on top of slider base values (sliders are never overwritten).
-- `src/ui/presets.ts` — built-ins ('Print Shop', 'Neon Strings', 'Full Collage')
-  + localStorage saves + JSON export/import. Presets capture global state,
-  per-effect enabled/values, and routings.
+- `src/ui/presets.ts` — 22 built-ins + localStorage saves (`fretart.presets.v2`;
+  v1 saves migrate lazily on first read, one-way) + JSON export/import. Presets
+  capture global state, per-effect enabled/values, routings, and (v2) `category`
+  + `description`. Categories (`PRESET_CATEGORIES`, display order): Line & Shape
+  · Print & Paper · Motion & Light · Audio Reactive · Collage & Mixed.
+  `byCategory()` shelves names for browsers; `categoryOf()` resolves a missing/
+  unknown category to the fallback (Collage & Mixed) so v1 files still import.
+  User saves inherit the category of the preset they were tweaked from.
+  `presets.lint.test.ts` fails if a built-in references a nonexistent
+  effect/param/source/palette/category or an out-of-range value — contributor
+  presets can't rot silently.
 - Palettes live in `src/core/types.ts` (`PALETTES`) — shared ink/paper colors so
   all layers cohere. Presets reference palettes by index, so only append, never
   reorder.
@@ -105,11 +113,14 @@ the preferred direction.
 - `stringLines.ts` ('strings') — fingertip strings; `ink` param: 0 = additive
   glow, 1 = normal-blended pen lines.
 - `risoCollage.ts`, `particleTrails.ts`, `motionEcho.ts` — see file headers.
-- Built-in presets: Line Drawing (default), Cut-Out Studio, Blueprint,
-  Wavy Ink, Gesture Study, Gabo Threads, Pastel Ribbon, Data Field,
-  Print Window, Negative Space, Mosaic Lens (area treatments),
-  Print Pyramid, Blueprint Pyramid (facets),
-  Print Shop, Neon Strings, Full Collage.
+- Built-in presets (22, by category) — Line & Shape: Line Drawing (default),
+  Cut-Out Studio, Wavy Ink, Gesture Study, Gabo Threads, Pastel Ribbon ·
+  Print & Paper: Print Window, Negative Space, Mosaic Lens (area treatments),
+  Print Pyramid, Blueprint Pyramid (facets), Print Shop · Motion & Light:
+  Blueprint, Data Field, Neon Strings · Audio Reactive: Pluck Bloom,
+  Attack Lines, Bass Fold, Resonance, Register Ribbon (audio sources read 0
+  without a mic, so they degrade to quiet, still looks) · Collage & Mixed:
+  Full Collage, Soft Collage.
 - Presets are full snapshots: `PresetStore.apply()` disables effects a preset
   doesn't mention (so old presets correctly turn new effects off).
 - Waviness vs vibration (strings) / breathe (shapes): `waviness` is a constant

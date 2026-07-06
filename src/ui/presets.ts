@@ -1,24 +1,48 @@
 import type { Engine } from '../core/engine';
 import type { ModMatrix, Routing } from '../mapping/modMatrix';
 
+/** How the preset browser shelves looks — order here is display order. */
+export const PRESET_CATEGORIES = [
+  'Line & Shape',
+  'Print & Paper',
+  'Motion & Light',
+  'Audio Reactive',
+  'Collage & Mixed',
+] as const;
+export type PresetCategory = (typeof PRESET_CATEGORIES)[number];
+
+/** Where presets land when their category is unknown (v1 saves/imports). */
+export const FALLBACK_CATEGORY: PresetCategory = 'Collage & Mixed';
+
 export interface PresetData {
+  /** Optional so v1 export files still import; resolve via categoryOf(). */
+  category?: PresetCategory;
+  /** One-liner for UI tooltips; built-ins always have one. */
+  description?: string;
   global: { mirror: boolean; videoOpacity: number; paletteIndex: number };
   effects: Record<string, { enabled: boolean; values: Record<string, number> }>;
   routings: Routing[];
 }
 
-const STORAGE_KEY = 'fretart.presets.v1';
+export function categoryOf(data: PresetData): PresetCategory {
+  return data.category && (PRESET_CATEGORIES as readonly string[]).includes(data.category)
+    ? data.category
+    : FALLBACK_CATEGORY;
+}
+
+const STORAGE_KEY = 'fretart.presets.v2';
+const LEGACY_STORAGE_KEY = 'fretart.presets.v1';
 
 /**
  * Curated starting points. Values omitted here fall back to each param's
  * default, so built-ins stay valid as effects gain parameters.
  */
 export const BUILT_IN_PRESETS: Record<string, PresetData> = {
-  // ---- Line & shape presets (muted, gallery-leaning palettes) ----
+  // ---- Line & Shape (muted, gallery-leaning palettes) ----
   'Line Drawing': {
-    // One-line contour drawing: single ink line wrapping all fingertips,
-    // pen-drawn strings between the hands. Studio Ink palette (warm paper,
-    // graphite + vermilion accent).
+    category: 'Line & Shape',
+    description: 'One ink line wrapping the fingertips, pen-drawn strings between the hands.',
+    // Studio Ink palette: warm paper, graphite + vermilion accent.
     global: { mirror: true, videoOpacity: 1, paletteIndex: 4 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -35,8 +59,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Cut-Out Studio': {
-    // Matisse cut-out / Lieberman pastel blob: translucent filled shape with
-    // a fine contour, soft echo. Pastel Play palette.
+    category: 'Line & Shape',
+    description: 'Matisse cut-out: a translucent pastel shape with a fine contour and soft echo.',
     global: { mirror: true, videoOpacity: 0.92, paletteIndex: 5 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -53,8 +77,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Blueprint': {
-    // Cyanotype constellation: pale hairlines and dots on Prussian-blue
-    // darkness, slow glowing echo — plotter systems meet blueprint prints.
+    category: 'Motion & Light',
+    description: 'Pale constellation lines and dots glowing slowly on Prussian-blue darkness.',
     global: { mirror: true, videoOpacity: 0.14, paletteIndex: 7 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -71,8 +95,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Wavy Ink': {
-    // Hand-drawn wavering line quality: everything undulates gently even at
-    // rest — the waviness showcase. Studio Ink palette.
+    category: 'Line & Shape',
+    description: 'Everything undulates gently even at rest — the hand-drawn line showcase.',
     global: { mirror: true, videoOpacity: 1, paletteIndex: 4 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -89,8 +113,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Gesture Study': {
-    // Charcoal life-drawing session: soft Morandi tones, faint filled shape,
-    // dense thin webs inside each hand like construction lines.
+    category: 'Line & Shape',
+    description: 'Charcoal life-drawing: faint fills and thin construction webs in Morandi tones.',
     global: { mirror: true, videoOpacity: 0.9, paletteIndex: 6 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -107,9 +131,9 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Gabo Threads': {
-    // Naum Gabo string sculpture: many taut straight hairline threads inside
-    // and between the hands; motion makes them ring, stillness keeps them
-    // perfectly straight. Ink & Ember palette.
+    category: 'Line & Shape',
+    description: 'Taut hairline threads that ring with motion and fall dead straight in stillness.',
+    // Naum Gabo string sculpture; Ink & Ember palette.
     global: { mirror: true, videoOpacity: 1, paletteIndex: 3 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -126,8 +150,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Pastel Ribbon': {
-    // Lieberman playfulness: contour-less pastel blob that breathes and
-    // drifts, soft round particles, dreamy echo. Pastel Play palette.
+    category: 'Line & Shape',
+    description: 'A contour-less pastel blob that breathes and drifts among soft particles.',
     global: { mirror: true, videoOpacity: 0.95, paletteIndex: 5 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -144,8 +168,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Data Field': {
-    // Clinical data-minimalism (Ryoji Ikeda territory): near-black frame,
-    // pale straight hairlines, constellation dots, tiny precise particles.
+    category: 'Motion & Light',
+    description: 'Near-black frame, pale hairlines, tiny precise dots — clinical data minimalism.',
     global: { mirror: true, videoOpacity: 0.06, paletteIndex: 7 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -161,11 +185,11 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
       { enabled: false, source: '', target: '', amount: 0 },
     ],
   },
-  // ---- Area-treatment presets (the region the lines enclose becomes a
+  // ---- Print & Paper (area treatments: the enclosed region becomes a
   // re-rendered window on the feed, like the reference video) ----
   'Print Window': {
-    // Closest to the reference: the finger shape is a halftone-duotone print
-    // of whatever is behind it, with a drawn contour. Studio Ink palette.
+    category: 'Print & Paper',
+    description: 'The finger shape becomes a halftone duotone print of whatever is behind it.',
     global: { mirror: true, videoOpacity: 1, paletteIndex: 4 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -182,8 +206,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Negative Space': {
-    // The area between your hands inverts reality — a photographic negative
-    // held inside a thin contour. Morandi palette, soft echo.
+    category: 'Print & Paper',
+    description: 'The area between your hands inverts reality — a photographic negative in a contour.',
     global: { mirror: true, videoOpacity: 0.95, paletteIndex: 6 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -200,8 +224,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Mosaic Lens': {
-    // The shape pixelates what it covers into chunky mosaic cells; playing
-    // faster makes the cells coarser (negative routing). Pastel Play.
+    category: 'Print & Paper',
+    description: 'The shape pixelates what it covers; playing faster makes the cells coarser.',
     global: { mirror: true, videoOpacity: 1, paletteIndex: 5 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -217,11 +241,11 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
       { enabled: false, source: '', target: '', amount: 0 },
     ],
   },
-  // ---- Facet presets (the finger quad as a folded screen-printed sheet) ----
+  // ---- Facets (the finger quad as a folded screen-printed sheet) ----
   'Print Pyramid': {
-    // The user-picked look from scratch/02: each facet of the fingertip
-    // pyramid printed on a different riso plate — dither, sparse red dots,
-    // poster bands, halftone — shaded by one key light. Riso Classic inks.
+    category: 'Print & Paper',
+    description: 'Each facet of the fingertip pyramid printed on a different riso plate.',
+    // The user-picked look from scratch/02, shaded by one key light.
     global: { mirror: true, videoOpacity: 0.85, paletteIndex: 0 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -239,8 +263,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Blueprint Pyramid': {
-    // Cyanotype relief: pale duotone screens on Prussian-blue night, thin
-    // cross-hand strings, slow echo — an architectural drawing that breathes.
+    category: 'Print & Paper',
+    description: 'Cyanotype relief: an architectural drawing that breathes on Prussian-blue night.',
     global: { mirror: true, videoOpacity: 0.25, paletteIndex: 7 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -257,8 +281,9 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
       { enabled: false, source: '', target: '', amount: 0 },
     ],
   },
-  // ---- Print / pop presets ----
   'Print Shop': {
+    category: 'Print & Paper',
+    description: 'The live feed as a riso print — dots coarsen with spread, plates slip with speed.',
     global: { mirror: true, videoOpacity: 1, paletteIndex: 0 },
     effects: {
       riso: { enabled: true, values: {} },
@@ -275,6 +300,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Neon Strings': {
+    category: 'Motion & Light',
+    description: 'Glowing strings and sparks over a long feedback trail — the stage look.',
     global: { mirror: true, videoOpacity: 0.14, paletteIndex: 2 },
     effects: {
       riso: { enabled: false, values: {} },
@@ -291,6 +318,8 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
     ],
   },
   'Full Collage': {
+    category: 'Collage & Mixed',
+    description: 'Riso print, strings, and particles layered into one moving collage.',
     global: { mirror: true, videoOpacity: 0.85, paletteIndex: 0 },
     effects: {
       riso: { enabled: true, values: {} },
@@ -303,6 +332,123 @@ export const BUILT_IN_PRESETS: Record<string, PresetData> = {
       { enabled: true, source: 'right.speed', target: 'particles.rate', amount: 0.4 },
       { enabled: true, source: 'left.spread', target: 'riso.dotScale', amount: 0.35 },
       { enabled: true, source: 'left.speed', target: 'strings.vibration', amount: 0.5 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  'Soft Collage': {
+    category: 'Collage & Mixed',
+    description: 'A dusty Morandi riso collage with a drawn contour and gentle echo.',
+    global: { mirror: true, videoOpacity: 0.9, paletteIndex: 6 },
+    effects: {
+      riso: { enabled: true, values: { dotScale: 55, misreg: 0.006, opacity: 0.85 } },
+      shapes: { enabled: true, values: { style: 0, line: 2, fill: 0, smooth: 0.7, breathe: 0.2, waviness: 0.1 } },
+      facets: { enabled: false, values: {} },
+      strings: { enabled: false, values: {} },
+      particles: { enabled: true, values: { rate: 0.2, size: 5, opacity: 0.4, scatter: 0.2 } },
+      echo: { enabled: true, values: { persist: 0.55, mix: 0.2, drift: 0.05, hue: 0 } },
+    },
+    routings: [
+      { enabled: true, source: 'right.speed', target: 'riso.misreg', amount: 0.35 },
+      { enabled: true, source: 'left.spread', target: 'riso.dotScale', amount: 0.3 },
+      { enabled: false, source: '', target: '', amount: 0 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  // ---- Audio Reactive (all read 0 without a mic, so these still work
+  // silently — sound just brings them to life) ----
+  'Pluck Bloom': {
+    category: 'Audio Reactive',
+    description: 'Each pluck blooms the cut-out shape — play softly and it barely breathes.',
+    global: { mirror: true, videoOpacity: 0.95, paletteIndex: 5 },
+    effects: {
+      riso: { enabled: false, values: {} },
+      shapes: { enabled: true, values: { style: 1, line: 1.4, fill: 0.2, smooth: 0.9, breathe: 0.05, waviness: 0.1 } },
+      facets: { enabled: false, values: {} },
+      strings: { enabled: false, values: {} },
+      particles: { enabled: false, values: {} },
+      echo: { enabled: true, values: { persist: 0.5, mix: 0.18, drift: 0.04, hue: 0 } },
+    },
+    routings: [
+      { enabled: true, source: 'audio.onset', target: 'shapes.breathe', amount: 0.6 },
+      { enabled: true, source: 'audio.onset', target: 'shapes.fill', amount: 0.35 },
+      { enabled: true, source: 'audio.level', target: 'shapes.line', amount: 0.25 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  'Attack Lines': {
+    category: 'Audio Reactive',
+    description: 'Pen strings ring only when a note is struck — staccato made visible.',
+    global: { mirror: true, videoOpacity: 1, paletteIndex: 4 },
+    effects: {
+      riso: { enabled: false, values: {} },
+      shapes: { enabled: true, values: { style: 0, line: 1.8, fill: 0, smooth: 0.6, breathe: 0.1, waviness: 0 } },
+      facets: { enabled: false, values: {} },
+      strings: { enabled: true, values: { ink: 1, web: 0, cross: 1, thickness: 1.3, glow: 0.55, vibration: 0.08, frequency: 3, waviness: 0 } },
+      particles: { enabled: false, values: {} },
+      echo: { enabled: false, values: {} },
+    },
+    routings: [
+      { enabled: true, source: 'audio.onset', target: 'strings.vibration', amount: 0.65 },
+      { enabled: true, source: 'audio.level', target: 'strings.glow', amount: 0.3 },
+      { enabled: true, source: 'audio.onset', target: 'shapes.breathe', amount: 0.3 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  'Bass Fold': {
+    category: 'Audio Reactive',
+    description: 'Low notes push the paper pyramid up out of the frame.',
+    // spreadDrive off so the bass owns the apex; hands only place the sheet.
+    global: { mirror: true, videoOpacity: 0.85, paletteIndex: 3 },
+    effects: {
+      riso: { enabled: false, values: {} },
+      shapes: { enabled: false, values: {} },
+      facets: { enabled: true, values: { mode: 1, apex: 0.06, spreadDrive: 0, shade: 1, pattern: 0, density: 80, angle: 30, misreg: 0.1, edge: 0.6, paperBack: 0.85, opacity: 0.95 } },
+      strings: { enabled: false, values: {} },
+      particles: { enabled: false, values: {} },
+      echo: { enabled: false, values: {} },
+    },
+    routings: [
+      { enabled: true, source: 'audio.bass', target: 'facets.apex', amount: 0.55 },
+      { enabled: true, source: 'audio.onset', target: 'facets.misreg', amount: 0.35 },
+      { enabled: true, source: 'audio.level', target: 'facets.shade', amount: 0.3 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  'Resonance': {
+    category: 'Audio Reactive',
+    description: 'Sustain lingers — the louder the room rings, the longer the trails last.',
+    global: { mirror: true, videoOpacity: 0.9, paletteIndex: 6 },
+    effects: {
+      riso: { enabled: false, values: {} },
+      shapes: { enabled: true, values: { style: 0, line: 2, fill: 0.08, smooth: 0.7, breathe: 0.2, waviness: 0.15 } },
+      facets: { enabled: false, values: {} },
+      strings: { enabled: false, values: {} },
+      particles: { enabled: false, values: {} },
+      echo: { enabled: true, values: { persist: 0.6, mix: 0.15, drift: 0.03, hue: 0 } },
+    },
+    routings: [
+      { enabled: true, source: 'audio.level', target: 'echo.mix', amount: 0.45 },
+      { enabled: true, source: 'audio.level', target: 'echo.persist', amount: 0.25 },
+      { enabled: true, source: 'audio.pitch', target: 'shapes.waviness', amount: 0.3 },
+      { enabled: false, source: '', target: '', amount: 0 },
+    ],
+  },
+  'Register Ribbon': {
+    category: 'Audio Reactive',
+    description: 'Melody as a ribbon — climb the neck and the strings ripple faster.',
+    global: { mirror: true, videoOpacity: 0.2, paletteIndex: 7 },
+    effects: {
+      riso: { enabled: false, values: {} },
+      shapes: { enabled: true, values: { style: 2, line: 1, fill: 0, smooth: 0.5, breathe: 0, waviness: 0 } },
+      facets: { enabled: false, values: {} },
+      strings: { enabled: true, values: { ink: 0, web: 0, cross: 1, thickness: 1.6, glow: 0.6, vibration: 0.2, frequency: 2, waviness: 0.1 } },
+      particles: { enabled: false, values: {} },
+      echo: { enabled: true, values: { persist: 0.7, mix: 0.3, drift: 0.05, hue: 0 } },
+    },
+    routings: [
+      { enabled: true, source: 'audio.pitch', target: 'strings.waviness', amount: 0.55 },
+      { enabled: true, source: 'audio.pitch', target: 'strings.frequency', amount: 0.5 },
+      { enabled: true, source: 'audio.level', target: 'strings.glow', amount: 0.3 },
       { enabled: false, source: '', target: '', amount: 0 },
     ],
   },
@@ -322,7 +468,11 @@ export class PresetStore {
     for (const e of this.engine.effects) {
       effects[e.id] = { enabled: e.enabled, values: { ...e.values } };
     }
+    // A user save is almost always a tweak of the look they loaded, so it
+    // inherits that look's shelf in the browser.
+    const current = BUILT_IN_PRESETS[this.currentName] ?? this.readStorage()[this.currentName];
     return {
+      category: current ? categoryOf(current) : FALLBACK_CATEGORY,
       global: {
         mirror: this.engine.mirror,
         videoOpacity: this.engine.videoOpacity,
@@ -358,10 +508,45 @@ export class PresetStore {
 
   private readStorage(): Record<string, PresetData> {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+      const v2 = localStorage.getItem(STORAGE_KEY);
+      if (v2 !== null) return JSON.parse(v2);
+      return this.migrateLegacy();
     } catch {
       return {};
     }
+  }
+
+  /** One-way v1 → v2 move: old saves land in the fallback category. */
+  private migrateLegacy(): Record<string, PresetData> {
+    const v1 = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (v1 === null) return {};
+    let migrated: Record<string, PresetData> = {};
+    try {
+      const saves = JSON.parse(v1) as Record<string, PresetData>;
+      for (const [name, data] of Object.entries(saves)) {
+        migrated[name] = { ...data, category: categoryOf(data) };
+      }
+    } catch {
+      migrated = {}; // corrupt v1: nothing worth carrying over
+    }
+    this.writeStorage(migrated);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return migrated;
+  }
+
+  /** Preset names shelved by category (display order), user saves after built-ins. */
+  byCategory(): Partial<Record<PresetCategory, string[]>> {
+    const grouped: Partial<Record<PresetCategory, string[]>> = {};
+    const add = (name: string, data: PresetData) =>
+      (grouped[categoryOf(data)] ??= []).push(name);
+    for (const [name, data] of Object.entries(BUILT_IN_PRESETS)) add(name, data);
+    for (const [name, data] of Object.entries(this.readStorage())) add(name, data);
+    // Rebuild in canonical order so callers can iterate keys directly.
+    const ordered: Partial<Record<PresetCategory, string[]>> = {};
+    for (const cat of PRESET_CATEGORIES) {
+      if (grouped[cat]?.length) ordered[cat] = grouped[cat];
+    }
+    return ordered;
   }
 
   private writeStorage(all: Record<string, PresetData>): void {

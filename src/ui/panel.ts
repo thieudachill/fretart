@@ -313,7 +313,19 @@ export class Panel {
   }
 
   private addPresetDropdown(f: FolderApi) {
-    const options = Object.fromEntries(this.deps.presets.listNames().map((n) => [n, n]));
+    // Interim category UI until the Phase-6 preset browser: shelf the
+    // dropdown by category with short prefixes ('Audio · Pluck Bloom').
+    const SHORT: Record<string, string> = {
+      'Line & Shape': 'Line',
+      'Print & Paper': 'Print',
+      'Motion & Light': 'Motion',
+      'Audio Reactive': 'Audio',
+      'Collage & Mixed': 'Collage',
+    };
+    const options: Record<string, string> = {};
+    for (const [cat, names] of Object.entries(this.deps.presets.byCategory())) {
+      for (const name of names) options[`${SHORT[cat] ?? cat} · ${name}`] = name;
+    }
     return f
       .addBinding(this.presetBinding, 'preset', { label: 'load', options, index: 0 })
       .on('change', (ev) => {
