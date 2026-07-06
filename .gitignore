@@ -1,21 +1,41 @@
-# dependencies / build
+# --- dependencies / build output ---
 node_modules/
 dist/
+*.tsbuildinfo
+.vite/
+.astro/
+.wrangler/
+coverage/
 
-# secrets — never commit API keys
+# --- secrets: never commit keys ---
 .env
+.env.*
+!.env.example
 *.local
 
-# fetched by scripts/setup-assets.mjs (postinstall)
+# --- fetched by scripts/setup-assets.mjs (postinstall) ---
 public/wasm/
 public/models/
 
-# copyrighted reference material, not part of the project
+# --- copyrighted reference material, not part of the project ---
 reference/
 
-# generated branding candidates (curated picks get committed elsewhere)
+# --- generated branding candidates (curated picks get committed explicitly) ---
 scratch/branding/out/
 
-# recordings / captures
+# --- recordings / captures (in-app output; committed demo media is force-added) ---
 *.webm
 *.mp4
+
+# --- logs ---
+*.log
+npm-debug.log*
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- editors ---
+.vscode/
+.idea/
