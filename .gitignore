@@ -1,0 +1,21 @@
+# dependencies / build
+node_modules/
+dist/
+
+# secrets — never commit API keys
+.env
+*.local
+
+# fetched by scripts/setup-assets.mjs (postinstall)
+public/wasm/
+public/models/
+
+# copyrighted reference material, not part of the project
+reference/
+
+# generated branding candidates (curated picks get committed elsewhere)
+scratch/branding/out/
+
+# recordings / captures
+*.webm
+*.mp4

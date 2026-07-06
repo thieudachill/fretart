@@ -1,0 +1,329 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FretArt scratch 01 — paper fold (2 facets)</title>
+<style>
+  html,body{margin:0;height:100%;background:#101014;overflow:hidden;
+    font:12px/1.5 ui-monospace,Consolas,monospace}
+  canvas{position:fixed;inset:0;display:block}
+  #hud{position:fixed;left:12px;bottom:10px;color:#ddd;background:rgba(0,0,0,.55);
+    padding:8px 12px;border-radius:6px;white-space:pre;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<script>
+(async () => {
+// Scratch prototype: the finger-quad split along a diagonal into TWO facets,
+// shaded like a folded sheet of screen-printed paper (the reference look).
+// Drag the 4 white points, or let them wander like playing fingers.
+const DEFAULTS = { mode: 'fold', palette: 0, pattern: 0, apex: 170 };
+
+const PALETTES = [ // mirrors src/core/types.ts
+  { name:'Riso Classic', paper:'#f4f1e8', inks:['#f6d000','#ff4b36','#0078bf'] },
+  { name:'Studio Ink',   paper:'#f5f1e6', inks:['#a39c8a','#c65b3f','#2b2a2e'] },
+  { name:'Cyanotype',    paper:'#1b3a5c', inks:['#5d87ab','#9dbfd6','#dcebf2'] },
+  { name:'Morandi',      paper:'#e8e2d6', inks:['#b5a48f','#8f9d92','#7d6f75'] },
+  { name:'Pastel Play',  paper:'#f3ede2', inks:['#e9b8c8','#a9c7e4','#8e9ec4'] },
+];
+
+// Facet treatment recipes — which "printing plate" each facet gets.
+const PATTERNS = [
+  { name:'reference', facets:[ {type:'dither',ink:2,den:1.5}, {type:'sparse',ink:1,den:0.8},
+                               {type:'posterize'}, {type:'halftone',ink:2,den:1} ] },
+  { name:'duotone',   facets:[ {type:'halftone',ink:2,den:1}, {type:'halftone',ink:1,den:1.3},
+                               {type:'dither',ink:2,den:1.2}, {type:'flat',ink:0} ] },
+  { name:'window',    facets:[ {type:'mosaic',den:1}, {type:'negative'},
+                               {type:'posterize'}, {type:'dither',ink:2,den:1.4} ] },
+  { name:'minimal',   facets:[ {type:'flat',ink:0}, {type:'paper'},
+                               {type:'flat',ink:1}, {type:'paper'} ] },
+];
+
+const S = { mode:DEFAULTS.mode, pal:DEFAULTS.palette, pat:DEFAULTS.pattern,
+            apex:DEFAULTS.apex, angleSpread:30, density:1, wander:true,
+            assign:0, diagonal:0, shadeK:1 };
+
+const hex = c => { const n=parseInt(c.slice(1),16); return [n>>16&255,n>>8&255,n&255]; };
+const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+const css = (c,a=1) => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+const hash2 = (x,y) => { const s=Math.sin(x*127.1+y*311.7)*43758.5453; return s-Math.floor(s); };
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const hud = document.getElementById('hud');
+let cw=0, ch=0;
+
+// --- webcam (mirrored, like the app), with gradient fallback ---
+const video = document.createElement('video');
+video.muted = true; video.playsInline = true;
+let hasCam = false;
+try {
+  const s = await navigator.mediaDevices.getUserMedia({ video:{ width:1280, height:720 } });
+  video.srcObject = s; await video.play(); hasCam = true;
+} catch (e) { /* fallback gradient */ }
+
+// Low-res sampling buffer, same aspect as the canvas so cover-crops align.
+const buf = document.createElement('canvas');
+const bctx = buf.getContext('2d', { willReadFrequently:true });
+let bufData = null;
+
+function resize(){
+  cw = canvas.width = window.innerWidth;
+  ch = canvas.height = window.innerHeight;
+  buf.width = 220; buf.height = Math.max(2, Math.round(220*ch/cw));
+}
+window.addEventListener('resize', resize); resize();
+
+function drawVideoCover(g, W, H){
+  const va = video.videoWidth/video.videoHeight, ca = W/H;
+  let sw=video.videoWidth, sh=video.videoHeight, sx=0, sy=0;
+  if (va > ca){ sw = sh*ca; sx = (video.videoWidth-sw)/2; }
+  else        { sh = sw/ca; sy = (video.videoHeight-sh)/2; }
+  g.save(); g.translate(W,0); g.scale(-1,1);
+  g.drawImage(video, sx,sy,sw,sh, 0,0,W,H); g.restore();
+}
+function updateBuffer(){
+  if (!hasCam || video.readyState < 2){ bufData = null; return; }
+  drawVideoCover(bctx, buf.width, buf.height);
+  bufData = bctx.getImageData(0,0,buf.width,buf.height).data;
+}
+function sample(px, py){ // canvas px -> [r,g,b, luma01]
+  if (!bufData){
+    const l = Math.max(0, Math.min(1, 0.42 + 0.3*Math.sin(px*0.004+py*0.002) + 0.22*Math.cos(py*0.006)));
+    return [l*225, l*205, l*185, l];
+  }
+  const bx = Math.max(0, Math.min(buf.width-1,  px/cw*buf.width  |0));
+  const by = Math.max(0, Math.min(buf.height-1, py/ch*buf.height |0));
+  const i = (by*buf.width+bx)*4;
+  const r=bufData[i], g=bufData[i+1], b=bufData[i+2];
+  return [r,g,b,(0.299*r+0.587*g+0.114*b)/255];
+}
+
+// --- 4 points: draggable anchors + finger-like wander ---
+const anchors = [ {x:.38,y:.30},{x:.56,y:.22},{x:.68,y:.44},{x:.50,y:.64} ];
+const pts = anchors.map(()=>({x:0,y:0,px:0,py:0}));
+let dragIdx = -1, energy = 0;
+
+canvas.addEventListener('pointerdown', e => {
+  for (let i=0;i<4;i++){
+    if (Math.hypot(e.clientX-pts[i].x, e.clientY-pts[i].y) < 34){ dragIdx=i; return; }
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (dragIdx < 0) return;
+  anchors[dragIdx].x = e.clientX/cw; anchors[dragIdx].y = e.clientY/ch;
+});
+canvas.addEventListener('pointerup', () => dragIdx = -1);
+
+function updatePoints(t, dt){
+  let spd = 0;
+  for (let i=0;i<4;i++){
+    const a = anchors[i];
+    let x = a.x, y = a.y;
+    if (S.wander){
+      x += 0.030*Math.sin(t*1.25+i*2.1) + 0.012*Math.sin(t*3.6+i*1.3);
+      y += 0.026*Math.sin(t*1.05+i*1.7) + 0.010*Math.cos(t*4.1+i*2.4);
+    }
+    const p = pts[i];
+    p.px = p.x; p.py = p.y;
+    p.x = x*cw; p.y = y*ch;
+    if (dt > 0) spd += Math.hypot(p.x-p.px, p.y-p.py)/dt/Math.max(1,ch);
+  }
+  energy += (Math.min(1, spd/4/0.7) - energy)*Math.min(1, dt*6);
+}
+
+// --- geometry: angle-sorted quad -> facets with virtual z ---
+function buildFacets(){
+  let cx=0, cy=0;
+  for (const p of pts){ cx+=p.x/4; cy+=p.y/4; }
+  const ord = [...pts].sort((a,b)=>Math.atan2(a.y-cy,a.x-cx)-Math.atan2(b.y-cy,b.x-cx))
+    .map(p=>({x:p.x, y:p.y, z:0}));
+  if (S.mode === 'fold'){
+    // Split along a diagonal; the ridge is lifted -> a folded/tented sheet.
+    const d0 = Math.hypot(ord[0].x-ord[2].x, ord[0].y-ord[2].y);
+    const d1 = Math.hypot(ord[1].x-ord[3].x, ord[1].y-ord[3].y);
+    const first = (d0 <= d1) !== (S.diagonal === 1);
+    const [a,b,c,d] = first ? [ord[0],ord[1],ord[2],ord[3]] : [ord[1],ord[2],ord[3],ord[0]];
+    a.z = S.apex; c.z = S.apex;
+    return [[a,b,c],[a,c,d]];
+  }
+  // Pyramid: centroid apex + 4 side facets.
+  const apex = { x:cx, y:cy, z:S.apex };
+  const out = [];
+  for (let i=0;i<4;i++) out.push([apex, ord[i], ord[(i+1)%4]]);
+  return out;
+}
+
+function shadeOf(tri){ // 0 shadow .. 1 lit, single key light upper-left
+  const [a,b,c] = tri;
+  const ux=b.x-a.x, uy=b.y-a.y, uz=b.z-a.z;
+  const vx=c.x-a.x, vy=c.y-a.y, vz=c.z-a.z;
+  let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+  if (nz < 0){ nx=-nx; ny=-ny; nz=-nz; }
+  const nl = Math.hypot(nx,ny,nz) || 1;
+  const d = (nx*-0.45 + ny*-0.55 + nz*0.70)/nl; // |L|=1
+  return Math.max(0, Math.min(1, (d+1)/2));
+}
+
+// --- facet painter ---
+function tinted(paper, shade){
+  const dark = mix(paper, [8,8,18], 0.6), lit = mix(paper, [255,255,252], 0.28);
+  const t = shade < 0.5 ? mix(dark, paper, shade*2) : mix(paper, lit, (shade-0.5)*2);
+  return mix(paper, t, S.shadeK);
+}
+function pathTri(g, tri){
+  g.beginPath(); g.moveTo(tri[0].x,tri[0].y);
+  g.lineTo(tri[1].x,tri[1].y); g.lineTo(tri[2].x,tri[2].y); g.closePath();
+}
+function triBounds(tri){
+  const xs = tri.map(p=>p.x), ys = tri.map(p=>p.y);
+  return { x0:Math.min(...xs), y0:Math.min(...ys), x1:Math.max(...xs), y1:Math.max(...ys),
+           cx:(xs[0]+xs[1]+xs[2])/3, cy:(ys[0]+ys[1]+ys[2])/3 };
+}
+
+function drawFacet(g, tri, spec, shade, angle, pal){
+  g.save(); pathTri(g, tri); g.clip();
+  const B = triBounds(tri);
+  const den = S.density * (spec.den || 1);
+  const windowType = spec.type === 'mosaic' || spec.type === 'negative';
+  if (!windowType) g.fillStyle = css(tinted(pal.paperRGB, shade), 0.93),
+                   g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+
+  const ink = pal.inkRGB[spec.ink ?? 2];
+  if (spec.type === 'flat'){
+    g.fillStyle = css(ink, 0.5); g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+  } else if (spec.type === 'halftone' || spec.type === 'sparse'){
+    const spacing = (spec.type==='sparse' ? 20 : 11)/den;
+    const R = Math.max(B.x1-B.x0, B.y1-B.y0);
+    const ca = Math.cos(angle), sa = Math.sin(angle);
+    g.fillStyle = css(ink, 0.95);
+    for (let gy=-R; gy<=R; gy+=spacing) for (let gx=-R; gx<=R; gx+=spacing){
+      const px = B.cx + gx*ca - gy*sa, py = B.cy + gx*sa + gy*ca;
+      if (px<B.x0-spacing||px>B.x1+spacing||py<B.y0-spacing||py>B.y1+spacing) continue;
+      let cov = (1 - sample(px,py)[3]) * (0.75 + 0.5*energy);
+      if (spec.type==='sparse') cov = cov > 0.45 ? (cov-0.45)*1.8 : 0;
+      if (cov <= 0.03) continue;
+      g.beginPath(); g.arc(px,py, spacing*0.62*Math.sqrt(Math.min(1,cov)), 0, 6.2832); g.fill();
+    }
+  } else if (spec.type === 'dither'){
+    const sp = 4.4/den;
+    g.fillStyle = css(ink, 0.95);
+    for (let py=B.y0; py<=B.y1; py+=sp) for (let px=B.x0; px<=B.x1; px+=sp){
+      const h = hash2(px|0, py|0);
+      const cov = (1 - sample(px,py)[3]) * (0.85 + 0.55*energy);
+      if (h < cov*1.1) g.fillRect(px+(hash2(py,px)-0.5)*sp, py+(h-0.5)*sp, 1.7, 1.7);
+    }
+  } else if (spec.type === 'posterize'){
+    const cell = 8/den;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const l = sample(px+cell/2, py+cell/2)[3];
+      const c = l<0.30 ? pal.inkRGB[2] : l<0.50 ? pal.inkRGB[1]
+              : l<0.70 ? pal.inkRGB[0] : pal.paperRGB;
+      g.fillStyle = css(c, 0.92); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  } else if (spec.type === 'mosaic'){
+    const cell = 14/den;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const s = sample(px+cell/2, py+cell/2);
+      g.fillStyle = css([s[0],s[1],s[2]]); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  } else if (spec.type === 'negative'){
+    const cell = 5;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const s = sample(px+cell/2, py+cell/2);
+      g.fillStyle = css([255-s[0],255-s[1],255-s[2]]); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  } // 'paper' = backing only
+
+  // Whole-facet light: the single-light rule that sells the fold as 3D.
+  if (shade < 0.5) g.fillStyle = `rgba(8,8,16,${(0.5-shade)*0.9*S.shadeK})`;
+  else             g.fillStyle = `rgba(255,255,248,${(shade-0.5)*0.45*S.shadeK})`;
+  g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+  g.restore();
+}
+
+function draw(t, dt){
+  updatePoints(t, dt);
+  updateBuffer();
+
+  // Dimmed live feed as the ground (figure/ground contrast).
+  if (hasCam && video.readyState >= 2){ drawVideoCover(ctx, cw, ch); }
+  else { ctx.fillStyle = '#1c1d24'; ctx.fillRect(0,0,cw,ch); }
+  ctx.fillStyle = 'rgba(6,6,10,0.62)'; ctx.fillRect(0,0,cw,ch);
+
+  const pal = PALETTES[S.pal];
+  pal.paperRGB = hex(pal.paper); pal.inkRGB = pal.inks.map(hex);
+  const facets = buildFacets();
+  const pattern = PATTERNS[S.pat];
+  const shades = facets.map(shadeOf);
+
+  facets.forEach((tri, i) => {
+    const spec = pattern.facets[(i + S.assign) % pattern.facets.length];
+    const angle = (15 + i*S.angleSpread) * Math.PI/180; // print-shop screen angles
+    drawFacet(ctx, tri, spec, shades[i], angle, pal);
+  });
+
+  // Fold edges: dark crease everywhere, paper highlight on lifted edges.
+  ctx.lineJoin = 'round';
+  facets.forEach(tri => {
+    pathTri(ctx, tri);
+    ctx.strokeStyle = css(mix(pal.inkRGB[2],[0,0,0],0.3), 0.4); ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+  facets.forEach((tri, i) => {
+    for (let e=0;e<3;e++){
+      const a = tri[e], b = tri[(e+1)%3];
+      if (a.z <= 0 && b.z <= 0) continue;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle = css(pal.paperRGB, 0.35 + 0.5*shades[i]); ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+  });
+
+  // Fingertip markers, like the tracking screenshot.
+  for (const p of pts){
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,6.2832);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.shadowColor = 'rgba(255,255,255,0.7)';
+    ctx.shadowBlur = 9; ctx.fill(); ctx.shadowBlur = 0;
+  }
+
+  hud.textContent =
+`fold scratch — ${S.mode} · palette ${pal.name} · pattern ${pattern.name} · ${hasCam?'webcam':'no cam (gradient)'}
+apex ${S.apex|0}  screen-angle step ${S.angleSpread}°  density ${S.density.toFixed(2)}  shading ${S.shadeK.toFixed(2)}
+1/2 fold|pyramid  Q/W pattern  E rotate facet inks  X other diagonal  P palette
+arrows: up/down apex  A/S angle step  [ ] density  -/= shading  G wander (drag the dots)`;
+}
+
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k==='1') S.mode='fold';
+  if (k==='2') S.mode='pyramid';
+  if (k==='q') S.pat = (S.pat+PATTERNS.length-1)%PATTERNS.length;
+  if (k==='w') S.pat = (S.pat+1)%PATTERNS.length;
+  if (k==='e') S.assign = (S.assign+1)%4;
+  if (k==='x') S.diagonal = 1-S.diagonal;
+  if (k==='p') S.pal = (S.pal+1)%PALETTES.length;
+  if (k==='g') S.wander = !S.wander;
+  if (k==='arrowup')   { S.apex = Math.min(400, S.apex+20); e.preventDefault(); }
+  if (k==='arrowdown') { S.apex = Math.max(0,   S.apex-20); e.preventDefault(); }
+  if (k==='a') S.angleSpread = Math.max(0,  S.angleSpread-5);
+  if (k==='s') S.angleSpread = Math.min(90, S.angleSpread+5);
+  if (k==='[') S.density = Math.max(0.4, S.density-0.1);
+  if (k===']') S.density = Math.min(2.5, S.density+0.1);
+  if (k==='-') S.shadeK = Math.max(0, S.shadeK-0.1);
+  if (k==='=') S.shadeK = Math.min(1.5, S.shadeK+0.1);
+});
+
+let last = performance.now();
+const loop = now => {
+  const dt = Math.min(0.1, (now-last)/1000); last = now;
+  draw(now/1000, dt);
+  requestAnimationFrame(loop);
+};
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FretArt scratch 03 — treatment lab</title>
+<style>
+  html,body{margin:0;height:100%;background:#101014;overflow:hidden;
+    font:12px/1.5 ui-monospace,Consolas,monospace}
+  canvas{position:fixed;inset:0;display:block;cursor:pointer}
+  #hud{position:fixed;left:12px;bottom:10px;color:#ddd;background:rgba(0,0,0,.55);
+    padding:8px 12px;border-radius:6px;white-space:pre;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<script>
+(async () => {
+// Treatment lab: every print treatment x (shade x density) on one screen,
+// live over the webcam, to choose the canonical facet recipes for presets.
+// Click a cell to inspect it full-screen; click again to return.
+
+const PALETTES = [ // mirrors src/core/types.ts
+  { name:'Riso Classic', paper:'#f4f1e8', inks:['#f6d000','#ff4b36','#0078bf'] },
+  { name:'Studio Ink',   paper:'#f5f1e6', inks:['#a39c8a','#c65b3f','#2b2a2e'] },
+  { name:'Cyanotype',    paper:'#1b3a5c', inks:['#5d87ab','#9dbfd6','#dcebf2'] },
+  { name:'Morandi',      paper:'#e8e2d6', inks:['#b5a48f','#8f9d92','#7d6f75'] },
+  { name:'Pastel Play',  paper:'#f3ede2', inks:['#e9b8c8','#a9c7e4','#8e9ec4'] },
+];
+
+const ROWS = [ // treatment (ink 2 = drawing ink by convention)
+  { label:'flat wash',  spec:{ type:'flat',   ink:0 } },
+  { label:'halftone',   spec:{ type:'halftone', ink:2 } },
+  { label:'sparse dot', spec:{ type:'sparse', ink:1 } },
+  { label:'dither',     spec:{ type:'dither', ink:2 } },
+  { label:'posterize',  spec:{ type:'posterize' } },
+  { label:'mosaic',     spec:{ type:'mosaic' } },
+  { label:'negative',   spec:{ type:'negative' } },
+];
+const COLS = [ // shade = facet lighting, den = screen density multiplier
+  { label:'shadow',      shade:0.22, den:1.0 },
+  { label:'flat light',  shade:0.55, den:1.0 },
+  { label:'lit',         shade:0.88, den:1.0 },
+  { label:'coarse',      shade:0.55, den:0.6 },
+  { label:'fine',        shade:0.55, den:1.6 },
+  { label:'lit+fine',    shade:0.88, den:1.6 },
+];
+
+const S = { pal:1, density:1, angle:0.45, shadeK:1 };
+let zoom = null; // {row, col} when inspecting one cell
+const energy = 0.25;
+
+const hex = c => { const n=parseInt(c.slice(1),16); return [n>>16&255,n>>8&255,n&255]; };
+const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+const css = (c,a=1) => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+const hash2 = (x,y) => { const s=Math.sin(x*127.1+y*311.7)*43758.5453; return s-Math.floor(s); };
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const hud = document.getElementById('hud');
+let cw=0, ch=0;
+
+const video = document.createElement('video');
+video.muted = true; video.playsInline = true;
+let hasCam = false;
+try {
+  const s = await navigator.mediaDevices.getUserMedia({ video:{ width:1280, height:720 } });
+  video.srcObject = s; await video.play(); hasCam = true;
+} catch (e) { /* fallback gradient */ }
+
+const buf = document.createElement('canvas');
+const bctx = buf.getContext('2d', { willReadFrequently:true });
+let bufData = null;
+
+function resize(){
+  cw = canvas.width = window.innerWidth;
+  ch = canvas.height = window.innerHeight;
+  buf.width = 220; buf.height = Math.max(2, Math.round(220*ch/cw));
+}
+window.addEventListener('resize', resize); resize();
+
+function drawVideoCover(g, W, H){
+  const va = video.videoWidth/video.videoHeight, ca = W/H;
+  let sw=video.videoWidth, sh=video.videoHeight, sx=0, sy=0;
+  if (va > ca){ sw = sh*ca; sx = (video.videoWidth-sw)/2; }
+  else        { sh = sw/ca; sy = (video.videoHeight-sh)/2; }
+  g.save(); g.translate(W,0); g.scale(-1,1);
+  g.drawImage(video, sx,sy,sw,sh, 0,0,W,H); g.restore();
+}
+function updateBuffer(){
+  if (!hasCam || video.readyState < 2){ bufData = null; return; }
+  drawVideoCover(bctx, buf.width, buf.height);
+  bufData = bctx.getImageData(0,0,buf.width,buf.height).data;
+}
+function sample(px, py){
+  if (!bufData){
+    const l = Math.max(0, Math.min(1, 0.42 + 0.3*Math.sin(px*0.004+py*0.002) + 0.22*Math.cos(py*0.006)));
+    return [l*225, l*205, l*185, l];
+  }
+  const bx = Math.max(0, Math.min(buf.width-1,  px/cw*buf.width  |0));
+  const by = Math.max(0, Math.min(buf.height-1, py/ch*buf.height |0));
+  const i = (by*buf.width+bx)*4;
+  const r=bufData[i], g=bufData[i+1], b=bufData[i+2];
+  return [r,g,b,(0.299*r+0.587*g+0.114*b)/255];
+}
+
+function tinted(paper, shade){
+  const dark = mix(paper, [8,8,18], 0.6), lit = mix(paper, [255,255,252], 0.28);
+  const t = shade < 0.5 ? mix(dark, paper, shade*2) : mix(paper, lit, (shade-0.5)*2);
+  return mix(paper, t, S.shadeK);
+}
+function pathTri(g, tri){
+  g.beginPath(); g.moveTo(tri[0].x,tri[0].y);
+  g.lineTo(tri[1].x,tri[1].y); g.lineTo(tri[2].x,tri[2].y); g.closePath();
+}
+function triBounds(tri){
+  const xs = tri.map(p=>p.x), ys = tri.map(p=>p.y);
+  return { x0:Math.min(...xs), y0:Math.min(...ys), x1:Math.max(...xs), y1:Math.max(...ys),
+           cx:(xs[0]+xs[1]+xs[2])/3, cy:(ys[0]+ys[1]+ys[2])/3 };
+}
+
+function drawFacet(g, tri, spec, shade, angle, pal, den){
+  g.save(); pathTri(g, tri); g.clip();
+  const B = triBounds(tri);
+  const windowType = spec.type === 'mosaic' || spec.type === 'negative';
+  if (!windowType) g.fillStyle = css(tinted(pal.paperRGB, shade), 0.93),
+                   g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+
+  const ink = pal.inkRGB[spec.ink ?? 2];
+  if (spec.type === 'flat'){
+    g.fillStyle = css(ink, 0.5); g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+  } else if (spec.type === 'halftone' || spec.type === 'sparse'){
+    const spacing = (spec.type==='sparse' ? 20 : 11)/den;
+    const R = Math.max(B.x1-B.x0, B.y1-B.y0);
+    const ca = Math.cos(angle), sa = Math.sin(angle);
+    g.fillStyle = css(ink, 0.95);
+    for (let gy=-R; gy<=R; gy+=spacing) for (let gx=-R; gx<=R; gx+=spacing){
+      const px = B.cx + gx*ca - gy*sa, py = B.cy + gx*sa + gy*ca;
+      if (px<B.x0-spacing||px>B.x1+spacing||py<B.y0-spacing||py>B.y1+spacing) continue;
+      let cov = (1 - sample(px,py)[3]) * (0.75 + 0.5*energy);
+      if (spec.type==='sparse') cov = cov > 0.45 ? (cov-0.45)*1.8 : 0;
+      if (cov <= 0.03) continue;
+      g.beginPath(); g.arc(px,py, spacing*0.62*Math.sqrt(Math.min(1,cov)), 0, 6.2832); g.fill();
+    }
+  } else if (spec.type === 'dither'){
+    const sp = 4.4/den;
+    g.fillStyle = css(ink, 0.95);
+    for (let py=B.y0; py<=B.y1; py+=sp) for (let px=B.x0; px<=B.x1; px+=sp){
+      const h = hash2(px|0, py|0);
+      const cov = (1 - sample(px,py)[3]) * (0.85 + 0.55*energy);
+      if (h < cov*1.1) g.fillRect(px+(hash2(py,px)-0.5)*sp, py+(h-0.5)*sp, 1.7, 1.7);
+    }
+  } else if (spec.type === 'posterize'){
+    const cell = 8/den;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const l = sample(px+cell/2, py+cell/2)[3];
+      const c = l<0.30 ? pal.inkRGB[2] : l<0.50 ? pal.inkRGB[1]
+              : l<0.70 ? pal.inkRGB[0] : pal.paperRGB;
+      g.fillStyle = css(c, 0.92); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  } else if (spec.type === 'mosaic'){
+    const cell = 14/den;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const s = sample(px+cell/2, py+cell/2);
+      g.fillStyle = css([s[0],s[1],s[2]]); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  } else if (spec.type === 'negative'){
+    const cell = 5;
+    for (let py=B.y0; py<=B.y1; py+=cell) for (let px=B.x0; px<=B.x1; px+=cell){
+      const s = sample(px+cell/2, py+cell/2);
+      g.fillStyle = css([255-s[0],255-s[1],255-s[2]]); g.fillRect(px,py,cell+0.5,cell+0.5);
+    }
+  }
+
+  if (shade < 0.5) g.fillStyle = `rgba(8,8,16,${(0.5-shade)*0.9*S.shadeK})`;
+  else             g.fillStyle = `rgba(255,255,248,${(shade-0.5)*0.45*S.shadeK})`;
+  g.fillRect(B.x0,B.y0,B.x1-B.x0,B.y1-B.y0);
+  g.restore();
+}
+
+// --- grid layout ---
+const LEFT = 110, TOP = 40;
+function cellRect(r, c){
+  const w = (cw-LEFT)/COLS.length, h = (ch-TOP)/ROWS.length;
+  return { x: LEFT + c*w, y: TOP + r*h, w, h };
+}
+canvas.addEventListener('click', e => {
+  if (zoom){ zoom = null; return; }
+  for (let r=0;r<ROWS.length;r++) for (let c=0;c<COLS.length;c++){
+    const R = cellRect(r,c);
+    if (e.clientX>=R.x && e.clientX<R.x+R.w && e.clientY>=R.y && e.clientY<R.y+R.h){
+      zoom = { r, c }; return;
+    }
+  }
+});
+
+function draw(){
+  updateBuffer();
+  if (hasCam && video.readyState >= 2){ drawVideoCover(ctx, cw, ch); }
+  else { ctx.fillStyle = '#1c1d24'; ctx.fillRect(0,0,cw,ch); }
+  ctx.fillStyle = 'rgba(6,6,10,0.62)'; ctx.fillRect(0,0,cw,ch);
+
+  const pal = PALETTES[S.pal];
+  pal.paperRGB = hex(pal.paper); pal.inkRGB = pal.inks.map(hex);
+
+  if (zoom){
+    const row = ROWS[zoom.r], col = COLS[zoom.c];
+    const s = Math.min(cw,ch)*0.42, mx = cw/2, my = ch/2 + 20;
+    const tri = [ {x:mx, y:my-s}, {x:mx+s*0.95, y:my+s*0.72}, {x:mx-s*0.95, y:my+s*0.72} ];
+    drawFacet(ctx, tri, row.spec, col.shade, S.angle, pal, S.density*col.den);
+    pathTri(ctx, tri); ctx.strokeStyle = css(pal.inkRGB[2], 0.5); ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = '#eee'; ctx.font = '16px ui-monospace,monospace';
+    ctx.fillText(`${row.label} · ${col.label} · ${pal.name}  (click to go back)`, 16, 26);
+  } else {
+    ctx.font = '11px ui-monospace,monospace';
+    for (let c=0;c<COLS.length;c++){
+      const R = cellRect(0,c);
+      ctx.fillStyle = '#bbb'; ctx.fillText(COLS[c].label, R.x+6, TOP-10);
+    }
+    for (let r=0;r<ROWS.length;r++){
+      const R = cellRect(r,0);
+      ctx.fillStyle = '#bbb'; ctx.fillText(ROWS[r].label, 10, R.y+R.h/2);
+      for (let c=0;c<COLS.length;c++){
+        const cell = cellRect(r,c), pad = 7;
+        const tri = [ {x:cell.x+cell.w/2, y:cell.y+pad},
+                      {x:cell.x+cell.w-pad, y:cell.y+cell.h-pad},
+                      {x:cell.x+pad, y:cell.y+cell.h-pad} ];
+        drawFacet(ctx, tri, ROWS[r].spec, COLS[c].shade, S.angle, pal, S.density*COLS[c].den);
+        pathTri(ctx, tri); ctx.strokeStyle = css(pal.inkRGB[2], 0.35); ctx.lineWidth = 1; ctx.stroke();
+      }
+    }
+  }
+
+  hud.textContent =
+`treatment lab · palette ${pal.name} · ${hasCam?'webcam':'no cam (gradient)'}
+click a cell to inspect · P palette · A/S screen angle · [ ] density · -/= shading`;
+}
+
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k==='p') S.pal = (S.pal+1)%PALETTES.length;
+  if (k==='a') S.angle -= 0.087;
+  if (k==='s') S.angle += 0.087;
+  if (k==='[') S.density = Math.max(0.4, S.density-0.1);
+  if (k===']') S.density = Math.min(2.5, S.density+0.1);
+  if (k==='-') S.shadeK = Math.max(0, S.shadeK-0.1);
+  if (k==='=') S.shadeK = Math.min(1.5, S.shadeK+0.1);
+});
+
+const loop = () => { draw(); requestAnimationFrame(loop); };
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
