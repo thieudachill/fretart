@@ -33,7 +33,18 @@ Requirements: Node 20+, a webcam, and a reasonably recent GPU. Chrome/Edge recom
 - The "Tracking feel" panel folder tunes responsiveness to your setup.
 - Recording outputs WebM; convert with `ffmpeg -i clip.webm -c:v libx264 -crf 18 clip.mp4`.
 
+## Credits
+
+Created by **[Matthew (Thieu) Nguyen](https://thieun.com)** — guitarist and builder
+from Da Nang, Vietnam ([YouTube](https://www.youtube.com/@thieu.dachill) ·
+[LinkedIn](https://www.linkedin.com/in/matthewnt) ·
+[Instagram](https://www.instagram.com/thieu.theguy)).
+
+FretArt exists to make visible not only the art of the sound, but the art of the
+flow of a guitarist's fingers.
+
 ## License
 
-[MIT](LICENSE). The MediaPipe wasm runtime and hand landmark model are fetched at
-install time from Google and are licensed Apache-2.0 by Google/MediaPipe.
+[MIT](LICENSE) © Matthew (Thieu) Nguyen and FretArt contributors. The MediaPipe wasm
+runtime and hand landmark model are fetched at install time from Google and are
+licensed Apache-2.0 by Google/MediaPipe.
