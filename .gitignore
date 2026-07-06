@@ -39,3 +39,4 @@ Desktop.ini
 # --- editors ---
 .vscode/
 .idea/
+.env

@@ -146,6 +146,26 @@ the preferred direction.
   the palm, so shapes/strings/particles each have a `thumb` param, default 0
   (tips only). All 21 landmarks are still tracked; this only affects visuals.
 
+## Brand (Phase 5)
+
+- Design tokens in `src/ui/theme.css` (`--fa-*`): Studio Ink as UI chrome —
+  paper/ink/wash/one vermilion accent. Mirrors `PALETTES` 'Studio Ink'; change
+  both together. Imported in `main.ts`; consumed by the Phase-6 UI + landing.
+- `scripts/genAsset.mjs` — CLI for brand illustration/video via Gemini
+  (`GEMINI_API_KEY` + model ids in `.env`, never committed). Output goes to
+  `scratch/branding/out/` (git-ignored); curated picks graduate to
+  `public/brand/` by hand after the user taste gate. Research, art direction,
+  prompt rules + QC rubric: `scratch/branding/NOTES.md`; per-asset attempt log:
+  `scratch/branding/ATTEMPTS.md`; review page: `scratch/branding/contact-sheet.html`.
+- Hard-won API constraints (verified live 2026-07-07): image model outputs
+  JPEG only (no PNG/alpha) via the Interactions API; Veo lite wants
+  `bytesBase64Encoded` (not `inlineData`), numeric `durationSeconds`, and has
+  no `negativePrompt` — bake avoidances into the prompt. Texture-only prompts
+  trip the recitation filter → paper grain is code-drawn (`grain.svg`).
+- Asset rule: generate → view → rubric-QC → refine, max 7 attempts, then that
+  asset pivots to a code-drawn fallback. Boundary: UI chrome and anything
+  drawable by code stays code; gen models only illustration/texture/video.
+
 ## Gotchas
 
 - `THREE.ColorManagement.enabled = false` in engine.ts — the whole pipeline is

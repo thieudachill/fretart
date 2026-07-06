@@ -1,3 +1,4 @@
+import './ui/theme.css';
 import { Engine } from './core/engine';
 import { Camera } from './input/camera';
 import { HandTracker } from './tracking/handTracker';

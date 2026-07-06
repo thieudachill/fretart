@@ -1,0 +1,34 @@
+/*
+ * FretArt design tokens — the Studio Ink palette as UI chrome.
+ * Shared by the app UI (Phase 6 performance bar / studio drawer) and the
+ * landing page (Phase 8). Values mirror PALETTES 'Studio Ink' in
+ * src/core/types.ts — if that palette ever changes, change both.
+ */
+:root {
+  /* material */
+  --fa-paper: #f5f1e6;
+  --fa-paper-deep: #ece6d6; /* pressed / hover surfaces */
+  --fa-ink: #2b2a2e;
+  --fa-ink-soft: #55525a; /* secondary text */
+  --fa-wash: #a39c8a; /* hairlines, disabled, captions */
+  --fa-accent: #c65b3f; /* ONE accent: rec dot, active states, links */
+
+  /* type */
+  --fa-font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --fa-font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  --fa-text-xs: 0.6875rem;
+  --fa-text-sm: 0.8125rem;
+  --fa-text-md: 1rem;
+
+  /* rhythm */
+  --fa-space-1: 0.25rem;
+  --fa-space-2: 0.5rem;
+  --fa-space-3: 0.75rem;
+  --fa-space-4: 1.25rem;
+  --fa-radius: 3px; /* print-shop corners: nearly square */
+  --fa-hairline: 1px solid var(--fa-wash);
+
+  /* motion */
+  --fa-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --fa-quick: 120ms;
+}
