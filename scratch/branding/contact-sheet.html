@@ -2,105 +2,102 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>FretArt — choose the brand concept (Phase 5 taste gate)</title>
+<title>FretArt — brand: The Human Press (Concept B v2)</title>
 <style>
-  :root { --paper:#f5f1e6; --ink:#2b2a2e; --wash:#a39c8a; --accent:#c65b3f; }
+  :root { --paper:#efe9dc; --ink:#20242c; --wash:#b9ad93; --amber:#e8a020; --accent:#c43a2f; }
   body { background:var(--paper); color:var(--ink); font:15px/1.5 'Segoe UI',system-ui,sans-serif;
          margin:0; padding:3rem 4vw; }
   h1 { font-weight:600; letter-spacing:.02em; }
   h1 small { color:var(--wash); font-weight:400; }
-  p.note { max-width:62ch; color:#55525a; }
-  section.concept { margin:3.5rem 0; border:2px solid var(--ink); padding:1.5rem 2rem 2rem; }
-  section.concept h2 { font-size:1.25rem; margin-top:0; }
-  section.concept h2 .chip { font-size:.75rem; letter-spacing:.1em; text-transform:uppercase;
+  p.note { max-width:62ch; color:#4c505a; }
+  section { margin:3rem 0; border-top:1px solid var(--wash); padding-top:1.5rem; }
+  section.winner { border:2px solid var(--ink); padding:1.5rem 2rem 2rem; }
+  h2 { font-size:1.1rem; }
+  h2 .chip { font-size:.75rem; letter-spacing:.1em; text-transform:uppercase;
     border:1px solid var(--ink); padding:.15rem .5rem; margin-right:.75rem; vertical-align:middle; }
-  p.pitch { max-width:62ch; }
+  h2 .chip.win { background:var(--accent); border-color:var(--accent); color:var(--paper); }
+  table.law { border-collapse:collapse; font-size:.85rem; margin:1rem 0 1.5rem; }
+  table.law td { border:1px solid var(--wash); padding:.35rem .7rem; }
+  table.law td:first-child { font-weight:600; }
   .row { display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start; }
   figure { margin:0; max-width:400px; }
   figure img, figure video { width:100%; display:block; border:1px solid var(--wash); }
-  figcaption { font-size:.8125rem; color:#55525a; padding-top:.4rem; }
+  figcaption { font-size:.8125rem; color:#4c505a; padding-top:.4rem; }
   .pass { color:#3c6e47; font-weight:600; } .pick { color:var(--accent); font-weight:600; }
   .swatches { display:flex; gap:.5rem; margin:.75rem 0 1.25rem; }
   .swatches span { width:2.5rem; height:2.5rem; border:1px solid var(--wash); display:inline-block; }
-  details { margin-top:1.25rem; } summary { cursor:pointer; color:#55525a; }
-  .tile { width:180px; height:180px; border:1px solid var(--wash);
-          background:url('grain.svg'); background-size:256px; }
+  details { margin-top:1.25rem; } summary { cursor:pointer; color:#4c505a; }
 </style>
 </head>
 <body>
-<h1>FretArt — choose ONE brand concept <small>· Phase 5 · A, B, or C</small></h1>
-<p class="note">Three complete directions, each generated + QC'd through the same
-process (prompts and attempt logs in ATTEMPTS.md). <strong>The winner becomes the
-brand for the whole project</strong> — app UI theme, landing page, README hero.
-Each concept is rooted in a palette the app already ships, so the brand always
-matches what the screen renders. Mixing is allowed (e.g. concept A's mark with
-another's palette) but one direction should lead.</p>
+<h1>FretArt — the brand: <em>The Human Press</em> <small>· Concept B v2 · winner</small></h1>
+<p class="note">Concept B won the three-way gate, then the foundation was deepened
+(user: "make the semantic meaning richer — nature, history, culturally neutral").
+Full manifesto in NOTES.md §2b. The short version — every device is a meaning:</p>
 
-<!-- ============================ CONCEPT A ============================ -->
-<section class="concept">
-  <h2><span class="chip">Concept A</span>Studio Ink — one continuous line</h2>
-  <div class="swatches" title="Studio Ink palette">
-    <span style="background:#f5f1e6"></span><span style="background:#2b2a2e"></span>
-    <span style="background:#c65b3f"></span><span style="background:#a39c8a"></span>
-  </div>
-  <p class="pitch">Quiet, gallery-like, drawn by a pen that never lifts. The finger
-  flow itself is the brand. Strength: closest to the app's default look, ages well,
-  reads "art project". Risk: understated — less punchy as a thumbnail.</p>
+<table class="law">
+  <tr><td>Paper</td><td>silence — the ground every sound happens against</td></tr>
+  <tr><td>Each ink</td><td>a voice — never more than three</td></tr>
+  <tr><td>Overlap</td><td>harmony — two inks multiply into a third color, like an interval</td></tr>
+  <tr><td>Misregistration</td><td>groove — the human offset, one constant direction</td></tr>
+  <tr><td>Halftone</td><td>resonance — grains gather at still points, like sand on a vibrating plate</td></tr>
+  <tr><td>Wave + node dots</td><td>the signature motif — the one drawing sound itself makes</td></tr>
+</table>
+<p class="note">The palette is the oldest palette humans have: ochre, red earth and
+soot on cream — the pigments of the earliest paintings on every inhabited continent.
+Neutral not by erasing history, but by standing on its shared floor.</p>
+<div class="swatches">
+  <span style="background:#efe9dc" title="paper / silence"></span>
+  <span style="background:#e8a020" title="ochre / voice"></span>
+  <span style="background:#c43a2f" title="vermilion / voice"></span>
+  <span style="background:#20242c" title="charcoal / voice"></span>
+  <span style="background:#8a4326" title="overlap / harmony"></span>
+</div>
+
+<section class="winner">
+  <h2><span class="chip win">v2 identity</span>generated from the deepened foundation</h2>
   <div class="row">
-    <figure><img src="out/mark-3.jpg" alt=""><figcaption><span class="pick">mark front-runner</span> — fingers dissolve into the strings</figcaption></figure>
-    <figure><img src="out/wordmark-2.jpg" alt=""><figcaption><span class="pass">wordmark</span> — baseline runs off both edges</figcaption></figure>
-    <figure><img src="out/splash-1.jpg" alt=""><figcaption><span class="pass">splash</span> — vermilion halftone bloom</figcaption></figure>
+    <figure><img src="out/riso2-mark-3.jpg" alt=""><figcaption><span class="pick">mark front-runner</span> — a fingertip makes the node; the fundamental swells between the still points</figcaption></figure>
+    <figure><img src="out/riso2-wordmark-1.jpg" alt=""><figcaption><span class="pass">wordmark</span> — the string runs through the word; one wave, one node dot</figcaption></figure>
+    <figure><img src="out/riso2-splash-1.jpg" alt=""><figcaption><span class="pass">splash</span> — sound spreading through matter: node → wave → ripples → grains</figcaption></figure>
   </div>
-  <details><summary>More A: alternates, spots, hero loop, grain</summary>
+  <details><summary>Mark alternates</summary>
     <div class="row" style="margin-top:1rem">
-      <figure><img src="out/mark-1.jpg" alt=""><figcaption><span class="pass">mark alt</span> — calmer, more literal</figcaption></figure>
-      <figure><img src="out/spot-a-1.jpg" alt=""><figcaption><span class="pass">spot</span> — fretting study</figcaption></figure>
-      <figure><img src="out/spot-b-1.jpg" alt=""><figcaption>borderline — muddled palm</figcaption></figure>
-      <figure><img src="out/spot-b-2.jpg" alt=""><figcaption>borderline — three red nails (rubric says one accent)</figcaption></figure>
-      <figure><video src="out/hero-loop-1.mp4" autoplay loop muted playsinline></video><figcaption><span class="pass">hero loop</span> — strings vibrate, first ≡ last frame</figcaption></figure>
-      <div><div class="tile"></div><figcaption>grain.svg (code-drawn, tiles)</figcaption></div>
+      <figure><img src="out/riso2-mark-1.jpg" alt=""><figcaption>alt — second harmonic, two lobes; fingertip reads as pen nib</figcaption></figure>
+      <figure><img src="out/riso2-mark-2.jpg" alt=""><figcaption>alt — outline finger (line language from Concept A)</figcaption></figure>
     </div>
   </details>
 </section>
 
-<!-- ============================ CONCEPT B ============================ -->
-<section class="concept">
-  <h2><span class="chip">Concept B</span>Print Shop — misregistered riso</h2>
-  <div class="swatches" title="Ink &amp; Ember palette">
-    <span style="background:#efe9dc"></span><span style="background:#e8a020"></span>
-    <span style="background:#c43a2f"></span><span style="background:#20242c"></span>
-  </div>
-  <p class="pitch">Bold flat shapes, two or three ink layers printed slightly off —
-  the app's own <code>misreg</code> parameter made into a brand. Strength: loud,
-  instantly recognizable, great thumbnails and posters. Risk: warmer/retro mood than
-  the app's muted default presets.</p>
-  <div class="row">
-    <figure><img src="out/riso-mark-1.jpg" alt=""><figcaption><span class="pass">mark</span> — charcoal hand, amber misreg halo, halftone palm</figcaption></figure>
-    <figure><img src="out/riso-wordmark-1.jpg" alt=""><figcaption><span class="pass">wordmark</span> — heavy grotesque, red offset layer</figcaption></figure>
-    <figure><img src="out/riso-splash-2.jpg" alt=""><figcaption><span class="pass">splash</span> — three-ink riso, both hands (attempt 1 invented poster text — killed)</figcaption></figure>
-  </div>
+<section>
+  <h2><span class="chip">Archive</span>Concept B v1 (style-only draft) + runners-up A and C</h2>
+  <details><summary>B v1 — before the deepening</summary>
+    <div class="row" style="margin-top:1rem">
+      <figure><img src="out/riso-mark-1.jpg" alt=""><figcaption>v1 mark</figcaption></figure>
+      <figure><img src="out/riso-wordmark-1.jpg" alt=""><figcaption>v1 wordmark</figcaption></figure>
+      <figure><img src="out/riso-splash-2.jpg" alt=""><figcaption>v1 splash</figcaption></figure>
+    </div>
+  </details>
+  <details><summary>Concept A — Studio Ink (runner-up)</summary>
+    <div class="row" style="margin-top:1rem">
+      <figure><img src="out/mark-3.jpg" alt=""><figcaption>mark</figcaption></figure>
+      <figure><img src="out/wordmark-2.jpg" alt=""><figcaption>wordmark</figcaption></figure>
+      <figure><img src="out/splash-1.jpg" alt=""><figcaption>splash</figcaption></figure>
+      <figure><video src="out/hero-loop-1.mp4" autoplay loop muted playsinline></video><figcaption>hero loop (technique proven; will be redone in B v2 language)</figcaption></figure>
+    </div>
+  </details>
+  <details><summary>Concept C — Blueprint (runner-up)</summary>
+    <div class="row" style="margin-top:1rem">
+      <figure><img src="out/cyano-mark-1.jpg" alt=""><figcaption>mark</figcaption></figure>
+      <figure><img src="out/cyano-wordmark-1.jpg" alt=""><figcaption>wordmark</figcaption></figure>
+      <figure><img src="out/cyano-splash-1.jpg" alt=""><figcaption>splash</figcaption></figure>
+    </div>
+  </details>
 </section>
 
-<!-- ============================ CONCEPT C ============================ -->
-<section class="concept">
-  <h2><span class="chip">Concept C</span>Blueprint — cyanotype of music</h2>
-  <div class="swatches" title="Cyanotype palette">
-    <span style="background:#1b3a5c"></span><span style="background:#5d87ab"></span>
-    <span style="background:#9dbfd6"></span><span style="background:#dcebf2"></span>
-  </div>
-  <p class="pitch">The hand as an engineering diagram: pale drafting lines, dimension
-  marks, callout circles on Prussian blue. "The geometry of playing," which is
-  literally what the app computes. Strength: unique, technical-poetic, dark-mode
-  native. Risk: cooler/quieter emotionally; the app defaults to warm paper looks.</p>
-  <div class="row">
-    <figure><img src="out/cyano-mark-1.jpg" alt=""><figcaption><span class="pass">mark</span> — patent-drawing hand on the fret grid</figcaption></figure>
-    <figure><img src="out/cyano-wordmark-1.jpg" alt=""><figcaption><span class="pass">wordmark</span> — drafting caps over a dimension line</figcaption></figure>
-    <figure><img src="out/cyano-splash-1.jpg" alt=""><figcaption><span class="pass">splash</span> — annotated neck diagram with fingertip callouts, real cyanotype coating edge</figcaption></figure>
-  </div>
-</section>
-
-<p class="note"><strong>How to answer:</strong> just say "A", "B", or "C" (plus any
-mix-and-match notes). The winner's palette gets cut into <code>src/ui/theme.css</code>,
-its assets graduate to <code>public/brand/</code>, and Phases 6–8 build on it.</p>
+<p class="note"><strong>Next:</strong> your verdict on the v2 trio (esp. mark-3 vs the
+alternates). Then the winner set gets completed in this language — spot
+illustrations, hero still + Veo loop, paper grain recut to #efe9dc — and Phase 6
+styles the UI with the tokens already cut into <code>src/ui/theme.css</code>.</p>
 </body>
 </html>

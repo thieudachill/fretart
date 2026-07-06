@@ -74,3 +74,26 @@ for the whole project). Concept A below; B and C at the end.
 1. cyano-splash-1 — PASS. Diagonal neck diagram, fingertip callout circles,
    authentic cyanotype coating edge. (Tiny illegible tick figures — acceptable
    as drafting texture, no real words.)
+
+---
+
+# Concept B v2 — "The Human Press" (deepened foundation, NOTES.md §2b)
+
+## riso2-mark
+1. riso2-mark-1 — PASS w/ note. Wave + nodes + Chladni halftone all correct;
+   fingertip so abstract it reads as a pen nib.
+2. riso2-mark-2 — partial. Iconic single-lobe fundamental wave, but fingertip
+   came back as outline (Concept A line language leaking in).
+3. riso2-mark-3 — PASS, FRONT-RUNNER. Solid charcoal fingertip with cream nail
+   cutout pressing at the right node, filled amber fundamental lens, halftone
+   dense at both nodes. Reducible to favicon size.
+
+## riso2-wordmark
+1. riso2-wordmark-1 — PASS. FRETART correct, amber ghost layer, string runs
+   through the word and dips into ONE wave with ONE vermilion node dot
+   (rhythm broken exactly once).
+
+## riso2-splash
+1. riso2-splash-1 — PASS. The thesis as a picture: fretting hand makes the
+   node, pressed string erupts into a red standing wave between still strings,
+   ripples spread from the pressed point, halftone gathers along still lines.

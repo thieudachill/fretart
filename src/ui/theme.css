@@ -1,17 +1,24 @@
 /*
- * FretArt design tokens — the Studio Ink palette as UI chrome.
- * Shared by the app UI (Phase 6 performance bar / studio drawer) and the
- * landing page (Phase 8). Values mirror PALETTES 'Studio Ink' in
- * src/core/types.ts — if that palette ever changes, change both.
+ * FretArt design tokens — Concept B "The Human Press" (chosen 2026-07-07).
+ * Semantic law (scratch/branding/NOTES.md §2b): paper = silence, each ink =
+ * a voice, overlap = harmony, misregistration = groove, halftone = resonance.
+ * Values mirror PALETTES 'Ink & Ember' in src/core/types.ts — change both
+ * together. Shared by the Phase-6 UI and the landing page.
  */
 :root {
-  /* material */
-  --fa-paper: #f5f1e6;
-  --fa-paper-deep: #ece6d6; /* pressed / hover surfaces */
-  --fa-ink: #2b2a2e;
-  --fa-ink-soft: #55525a; /* secondary text */
-  --fa-wash: #a39c8a; /* hairlines, disabled, captions */
-  --fa-accent: #c65b3f; /* ONE accent: rec dot, active states, links */
+  /* material — the oldest palette: ochre, red earth, soot, on cream */
+  --fa-paper: #efe9dc; /* silence — the ground every sound happens against */
+  --fa-paper-deep: #e5dcc9; /* pressed / hover surfaces */
+  --fa-ink: #20242c; /* charcoal — the leading voice, body text, keylines */
+  --fa-ink-soft: #4c505a; /* secondary text */
+  --fa-amber: #e8a020; /* ochre voice — fills, highlights, the offset ghost */
+  --fa-accent: #c65b3f; /* vermilion voice — rec dot, active states, links */
+  --fa-overlap: #8a4326; /* harmony: amber x vermilion multiplied — use for
+                            emphasis born from two elements meeting */
+
+  /* groove — the constant offset (one direction, like a player's timing) */
+  --fa-offset-x: -2px;
+  --fa-offset-y: -1px;
 
   /* type */
   --fa-font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
@@ -20,13 +27,13 @@
   --fa-text-sm: 0.8125rem;
   --fa-text-md: 1rem;
 
-  /* rhythm */
+  /* rhythm — the parallel-line grid */
   --fa-space-1: 0.25rem;
   --fa-space-2: 0.5rem;
   --fa-space-3: 0.75rem;
   --fa-space-4: 1.25rem;
   --fa-radius: 3px; /* print-shop corners: nearly square */
-  --fa-hairline: 1px solid var(--fa-wash);
+  --fa-hairline: 1px solid #b9ad93; /* a string, not a border */
 
   /* motion */
   --fa-ease: cubic-bezier(0.25, 0.1, 0.25, 1);

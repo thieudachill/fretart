@@ -64,16 +64,68 @@ matches what the screen renders. Same QC rubric and 7-attempt rule for all.
 
 - **Concept A — Studio Ink** (§2a, the original): one-line drawing on warm
   paper. Pillars: Line / Paper / Print restraint.
-- **Concept B — Print Shop**: risograph screen-print poster language. Bold
-  flat shapes, exactly two ink layers printed slightly *misregistered* (the
-  app's own `misreg` param made brand), coarse halftone dot shading. Palette:
-  Ink & Ember — paper `#efe9dc`, amber `#e8a020`, vermilion `#c43a2f`,
-  charcoal `#20242c`. References: riso gig posters, Bauhaus print, stamp art.
+- **Concept B — Print Shop** *(WINNER, user 2026-07-07)*: risograph
+  screen-print poster language. First draft was style-only ("riso gig
+  posters"); deepened into a real foundation in §2b below — every device now
+  has a semantic reason drawn from nature and shared human history, no
+  single-culture iconography.
 - **Concept C — Blueprint**: cyanotype photogram / technical drawing of
   music. Thin pale lines `#dcebf2` + mid-blue `#9dbfd6` on Prussian blue
   paper `#1b3a5c`; dimension ticks, fret-grid geometry, the hand as an
   engineering diagram. References: Anna Atkins cyanotypes, patent drawings.
   (Note: here the "paper" is dark — the keyable ground is the *blue*.)
+
+## 2b. Concept B deepened — "The Human Press" (the brand foundation)
+
+FretArt makes the invisible part of playing visible. The brand must do the
+same: every visual device is a *meaning*, not a texture. Culturally neutral
+by construction — grounded in physics, nature, and crafts that every
+inhabited continent developed independently.
+
+### The semantic law (memorize this; every asset obeys it)
+
+| Device | Means | Why it's true |
+|---|---|---|
+| Paper (cream) | **Silence** | The ground every sound happens against; rests are part of music. Paper showing through IS the fourth color. |
+| Each ink | **A voice** | Riso builds an image from few translucent layers; music builds timbre from few voices. Never more than three inks. |
+| Overlap | **Harmony** | Two translucent inks multiply into a third, deeper color — exactly two notes making an interval. Overlaps are composed, not accidental. |
+| Misregistration | **Groove** | Everywhere print was invented — woodblock, movable type, silkscreen, riso — each color is a separate pass of the hand, and the slip between passes is the human trace in the mechanical process. In music that trace is micro-timing: the note played slightly late, the bend slightly wide. The offset IS the humanity. |
+| Halftone | **Resonance** | Sand on a vibrating plate gathers at the still nodes and flees the moving antinodes — sound literally drawing with grains. Halftone dots behave like that sand: dense where the form is still, scattering where it vibrates. |
+| The standing wave + node dots | **The signature motif** | A plucked string draws one shape: a standing wave between two nodes. Its overtone ratios are physics, discovered independently by every musical tradition. The node dot (the still point that defines the wave) is the accent mark of the brand. |
+| Parallel lines | **Time held in matter** | Six strings; grain lines in the spruce of a guitar top (years recorded as lines); rings spreading on water. Lines that carry time — the brand's grid. |
+
+### The palette is the oldest palette
+
+Ink & Ember — cream `#efe9dc`, ochre-amber `#e8a020`, vermilion `#c43a2f`,
+charcoal `#20242c` — is not a retro choice. Ochre, red earth and soot are the
+pigments of the earliest paintings on every inhabited continent. No culture
+owns them; every culture began with them. That is the neutrality: not the
+absence of history but the *shared floor* of it.
+
+### Discipline rules (principles of art, applied)
+
+1. **The offset is constant.** One misregistration direction per composition
+   (amber ghost up-left), small and repeatable — a player's personal timing,
+   not sloppiness. Random multi-direction offsets are a QC fail.
+2. **Rhythm**: compositions are built on the parallel-line grid (strings /
+   grain / ripples) and broken exactly once — by the wave or the hand.
+   Repetition with one variation is rhythm; repetition with none is wallpaper.
+3. **Economy**: ≤3 inks + paper. If a fourth color appears that isn't an
+   overlap product, QC fail.
+4. **Figure-ground reversal is encouraged**: silence (paper) may cut through
+   sound (ink) — a rest in the middle of a phrase.
+5. **Halftone must have a gradient cause** (vibration amplitude, pressure,
+   light) — never uniform decorative dots.
+6. **Node dots are the only "logo dust" allowed** — placed where a wave
+   crosses stillness, never sprinkled.
+
+### What this means for prompts
+
+Name the physics in the prompt, not a culture's artifact: "standing wave
+between two node points", "halftone dots gathering dense at the nodes like
+sand on a vibrating plate", "two translucent ink layers overlapping into a
+darker third color", "the amber layer printed slightly offset toward the
+upper left". Avoid: named art movements, named national print traditions.
 
 ## 2a. Concept A — Studio Ink (first principles)
 
