@@ -27,7 +27,7 @@ verification + sim mode instead.
 
 ```
 camera.ts → handTracker.ts → features.ts → modMatrix.ts → engine.ts (effect chain) → screen
-                                (FrameFeatures)                 ↑ panel.ts (Tweakpane UI)
+audio/audioEngine.ts ─────────────↗ (FrameFeatures.audio)      ↑ panel.ts (Tweakpane UI)
 ```
 
 - `src/tracking/features.ts` — **the reusable foundation.** Converts MediaPipe
@@ -35,6 +35,16 @@ camera.ts → handTracker.ts → features.ts → modMatrix.ts → engine.ts (eff
   pinch distances, spread, presence envelope). Renderer-agnostic; future
   chord/note detection, MIDI/OSC, or audio-reactive modules consume this too.
   `FEATURE_SOURCES` is the registry of named 0..1 signals the mod matrix can route.
+- `src/audio/` — mic → `AudioFeatures` (all 0..1): `level` (RMS + fast-attack/
+  slow-release envelope), `onset` (positive spectral flux + adaptive threshold,
+  snaps to 1 per pluck then decays), `pitch` (autocorrelation → register,
+  E2→0..E6→1, holds between notes), `bass`/`air` band energies. Detectors in
+  `detectors.ts` are pure and unit-tested against synthesized buffers;
+  `audioEngine.ts` is the Web Audio shell. Mic constraints: echoCancellation/
+  noiseSuppression/autoGainControl **all false** (speech processors destroy
+  guitar transients). Routable as `audio.*` in `FEATURE_SOURCES`; everything
+  reads 0 with no mic. Panel "Audio (mic)" folder persists to
+  `fretart.audio.v1` — device state, outside presets like tracking feel.
 - `src/core/geometry.ts` — pure, unit-tested math the effects share: centroid,
   angle-sort-around-centroid, max-radius (spread), fold-2 quad split, key-light
   shade, and a closed Catmull-Rom sampler that reproduces three.js's
@@ -143,6 +153,5 @@ the preferred direction.
 
 ## Planned (not built)
 
-- `src/audio/` module: mic onset/pitch detection feeding `FEATURE_SOURCES`.
 - Chord/note inference from fretting-hand geometry.
 - Reorderable effect chain.

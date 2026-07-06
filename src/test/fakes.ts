@@ -1,6 +1,6 @@
 /** Shared test doubles — kept here so tests stay about behavior, not setup. */
 import { EffectBase } from '../effects/Effect';
-import type { FrameFeatures, HandFeatures, Vec2 } from '../core/types';
+import { zeroAudio, type FrameFeatures, type HandFeatures, type Vec2 } from '../core/types';
 
 /** Minimal concrete effect: two params, no rendering. */
 export class FakeEffect extends EffectBase {
@@ -49,6 +49,7 @@ export function makeFeatures(mutate?: (f: FrameFeatures) => void): FrameFeatures
     right: emptyHand(),
     handsDistance: 0,
     anyPresence: 0,
+    audio: zeroAudio(),
     time: 0,
   };
   mutate?.(f);

@@ -172,4 +172,19 @@ describe('getFeatureValue', () => {
     expect(getFeatureValue(f, 'right.speed')).toBe(0);
     expect(getFeatureValue(f, 'right.spread')).toBe(0);
   });
+
+  it('exposes audio features to the mod matrix when provided', () => {
+    const audio = { level: 0.8, onset: 1, pitch: 0.5, bass: 0.3, air: 0.1 };
+    const f = plainExtractor().update([], DT, IDENTITY, false, 0, audio);
+    expect(getFeatureValue(f, 'audio.level')).toBe(0.8);
+    expect(getFeatureValue(f, 'audio.onset')).toBe(1);
+    expect(getFeatureValue(f, 'audio.pitch')).toBe(0.5);
+  });
+
+  it('reads all audio sources as 0 when no mic is attached', () => {
+    const f = plainExtractor().update([], DT, IDENTITY, false, 0);
+    for (const id of ['audio.level', 'audio.onset', 'audio.pitch', 'audio.bass', 'audio.air']) {
+      expect(getFeatureValue(f, id), id).toBe(0);
+    }
+  });
 });

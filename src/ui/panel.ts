@@ -5,6 +5,7 @@ import type { Engine } from '../core/engine';
 import { Camera } from '../input/camera';
 import { FEATURE_SOURCES, FeatureExtractor } from '../tracking/features';
 import { ModMatrix } from '../mapping/modMatrix';
+import { AudioEngine } from '../audio/audioEngine';
 import type { Recorder } from '../recording/recorder';
 import type { DebugOverlay } from './debugOverlay';
 import { PresetStore } from './presets';
@@ -14,6 +15,7 @@ export interface PanelDeps {
   camera: Camera;
   extractor: FeatureExtractor;
   matrix: ModMatrix;
+  audio: AudioEngine;
   recorder: Recorder;
   overlay: DebugOverlay;
   presets: PresetStore;
@@ -31,11 +33,13 @@ export class Panel {
   private cameraBinding = { device: '' };
   private presetBinding = { preset: '', name: 'my preset' };
   private trackingBinding = { response: 0.5, anticipate: 30 };
+  private audioBinding = { listen: false, device: '', sensitivity: 1 };
 
   constructor(private deps: PanelDeps) {
     this.pane = new Pane({ title: 'FRETART' });
     this.buildGlobal();
     this.buildTracking();
+    this.buildAudio();
     this.buildRecording();
     this.buildEffects();
     this.buildModulation();
@@ -97,6 +101,89 @@ export class Panel {
     this.deps.extractor.setResponsiveness(this.trackingBinding.response);
     this.deps.extractor.lookaheadMs = this.trackingBinding.anticipate;
     localStorage.setItem('fretart.tracking.v1', JSON.stringify(this.trackingBinding));
+  }
+
+  /**
+   * Mic input. Like tracking feel, this is device state, not artistic state —
+   * persisted in fretart.audio.v1, outside presets, so a saved look never
+   * hijacks the mic.
+   */
+  private buildAudio(): void {
+    const { audio } = this.deps;
+    const stored = localStorage.getItem('fretart.audio.v1');
+    if (stored) {
+      try {
+        Object.assign(this.audioBinding, JSON.parse(stored));
+      } catch {
+        // Corrupt entry — fall back to defaults.
+      }
+    }
+    audio.sensitivity = this.audioBinding.sensitivity;
+
+    const f = this.pane.addFolder({ title: 'Audio (mic)', expanded: false });
+    const persist = () =>
+      localStorage.setItem('fretart.audio.v1', JSON.stringify(this.audioBinding));
+
+    const setListening = (on: boolean) => {
+      if (!on) {
+        audio.stop();
+        persist();
+        return;
+      }
+      audio
+        .start(this.audioBinding.device || undefined)
+        .then(() => {
+          persist();
+          void this.populateMics(f);
+        })
+        .catch((err) => {
+          console.error('Mic access failed', err);
+          this.audioBinding.listen = false;
+          this.pane.refresh();
+        });
+    };
+
+    f.addBinding(this.audioBinding, 'listen', { label: 'listen (guitar → visuals)' })
+      .on('change', (ev) => setListening(ev.value));
+    f.addBinding(this.audioBinding, 'sensitivity', {
+      label: 'sensitivity',
+      min: 0.25,
+      max: 4,
+      step: 0.05,
+    }).on('change', (ev) => {
+      audio.sensitivity = ev.value;
+      persist();
+    });
+    f.addBinding(audio.features, 'level', {
+      label: 'input level',
+      readonly: true,
+      view: 'graph',
+      min: 0,
+      max: 1,
+      interval: 50,
+    });
+
+    // Honor a persisted "listen" from the last session. The AudioContext may
+    // start suspended without a gesture; main.ts resumes it on first input.
+    if (this.audioBinding.listen) setListening(true);
+  }
+
+  private micRow: { dispose(): void } | null = null;
+
+  /** Mic labels exist only after permission — (re)build the picker then. */
+  private async populateMics(f: FolderApi): Promise<void> {
+    const devices = await AudioEngine.listDevices();
+    if (devices.length < 2) return;
+    this.micRow?.dispose();
+    const options = Object.fromEntries(devices.map((d) => [d.label, d.deviceId]));
+    this.micRow = f
+      .addBinding(this.audioBinding, 'device', { label: 'microphone', options })
+      .on('change', (ev) => {
+        if (this.audioBinding.listen) {
+          void this.deps.audio.start(ev.value).catch((err) => console.error(err));
+        }
+        localStorage.setItem('fretart.audio.v1', JSON.stringify(this.audioBinding));
+      });
   }
 
   private buildRecording(): void {

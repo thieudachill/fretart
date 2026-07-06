@@ -27,6 +27,28 @@ export interface HandFeatures {
   speed: number;
 }
 
+/**
+ * Sound-derived signals, all 0..1. What matters for guitar visuals:
+ * energy (level), attack (onset), register (pitch), timbre balance
+ * (bass/air). All read 0 when no mic is listening.
+ */
+export interface AudioFeatures {
+  /** Overall energy envelope — fast attack, slow release. */
+  level: number;
+  /** Snaps to 1 at each note attack, then decays — the pluck signal. */
+  onset: number;
+  /** Register on a log scale: low E (E2) → 0 … E6 → 1. Holds between notes. */
+  pitch: number;
+  /** Low-band warmth (~60–250 Hz). */
+  bass: number;
+  /** High-band sparkle (~4–12 kHz). */
+  air: number;
+}
+
+export function zeroAudio(): AudioFeatures {
+  return { level: 0, onset: 0, pitch: 0, bass: 0, air: 0 };
+}
+
 export interface FrameFeatures {
   left: HandFeatures;
   right: HandFeatures;
@@ -34,6 +56,7 @@ export interface FrameFeatures {
   handsDistance: number;
   /** max(left.presence, right.presence). */
   anyPresence: number;
+  audio: AudioFeatures;
   time: number;
 }
 

@@ -1,6 +1,8 @@
-import type { FrameFeatures, HandFeatures, Vec2 } from '../core/types';
+import { zeroAudio, type AudioFeatures, type FrameFeatures, type HandFeatures, type Vec2 } from '../core/types';
 import type { RawHand } from './handTracker';
 import { OneEuroFilter } from './oneEuroFilter';
+
+const NO_AUDIO = zeroAudio();
 
 const TIP_IDS = [4, 8, 12, 16, 20];
 const NUM_LANDMARKS = 21;
@@ -82,6 +84,7 @@ export class FeatureExtractor {
     view: ViewTransform,
     mirror: boolean,
     time: number,
+    audio: AudioFeatures = NO_AUDIO,
   ): FrameFeatures {
     const rawLeft = raw.find((h) => h.handedness === 'Left') ?? null;
     const rawRight = raw.find((h) => h.handedness === 'Right') ?? null;
@@ -102,6 +105,7 @@ export class FeatureExtractor {
       right: r,
       handsDistance,
       anyPresence: Math.max(l.presence, r.presence),
+      audio,
       time,
     };
   }
@@ -225,6 +229,12 @@ export const FEATURE_SOURCES: FeatureSource[] = [
   { id: 'hands.distance', label: 'Hands distance', get: (f) => Math.min(1, f.handsDistance * 1.5) },
   { id: 'left.height', label: 'L hand height', get: (f) => (1 - f.left.centroid.y) * f.left.presence },
   { id: 'right.height', label: 'R hand height', get: (f) => (1 - f.right.centroid.y) * f.right.presence },
+  // Sound sources (src/audio) — 0 whenever no mic is listening.
+  { id: 'audio.level', label: 'Sound level', get: (f) => f.audio.level },
+  { id: 'audio.onset', label: 'Sound onset (pluck)', get: (f) => f.audio.onset },
+  { id: 'audio.pitch', label: 'Sound register (low↔high)', get: (f) => f.audio.pitch },
+  { id: 'audio.bass', label: 'Sound bass', get: (f) => f.audio.bass },
+  { id: 'audio.air', label: 'Sound air (sparkle)', get: (f) => f.audio.air },
 ];
 
 export function getFeatureValue(f: FrameFeatures, id: string): number {

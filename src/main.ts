@@ -3,6 +3,7 @@ import { Camera } from './input/camera';
 import { HandTracker } from './tracking/handTracker';
 import { FeatureExtractor } from './tracking/features';
 import { ModMatrix } from './mapping/modMatrix';
+import { AudioEngine } from './audio/audioEngine';
 import { FacetFoldEffect } from './effects/facetFold';
 import { FingerShapesEffect } from './effects/fingerShapes';
 import { MotionEchoEffect } from './effects/motionEcho';
@@ -76,8 +77,15 @@ async function boot(): Promise<void> {
 
   const extractor = new FeatureExtractor();
   const matrix = new ModMatrix();
+  const audio = new AudioEngine();
   const recorder = new Recorder();
   const fixtureRec = new FixtureRecorder();
+
+  // Autoplay policy: if the mic auto-started from a persisted setting, its
+  // AudioContext may be suspended until the first real user gesture.
+  const resumeAudio = () => audio.resume();
+  window.addEventListener('pointerdown', resumeAudio);
+  window.addEventListener('keydown', resumeAudio);
   const overlay = new DebugOverlay(document.getElementById('overlay') as HTMLCanvasElement);
   const presets = new PresetStore(engine, matrix);
   presets.load('Line Drawing');
@@ -87,6 +95,7 @@ async function boot(): Promise<void> {
     camera,
     extractor,
     matrix,
+    audio,
     recorder,
     overlay,
     presets,
@@ -135,7 +144,8 @@ async function boot(): Promise<void> {
 
     const raw = sim ? sim.at(now / 1000) : tracker!.detect(camera.video, now);
     if (fixtureRec.recording) fixtureRec.add(now / 1000, raw);
-    const features = extractor.update(raw, dt, engine.view, engine.mirror, now / 1000);
+    audio.update(dt);
+    const features = extractor.update(raw, dt, engine.view, engine.mirror, now / 1000, audio.features);
     matrix.apply(engine.effects, features);
     engine.render(features, dt);
     overlay.draw(features);
