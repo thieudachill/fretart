@@ -1,5 +1,8 @@
 # Asset attempt log (rubric in NOTES.md §4, max 7 per asset)
 
+Three concepts (user request: generate B and C so ONE direction can be chosen
+for the whole project). Concept A below; B and C at the end.
+
 ## mark (logo)
 1. mark-1 — PASS. Clean hand-over-strings, one dot. Nits: ~8 strings, exits one side.
 2. mark-2 — FAIL. Tangled fingers, two accent dots.
@@ -39,3 +42,35 @@
    string ripple with hand + background locked, last frame ≡ first → seamless.
    Audio stripped (`-an`) → out/hero-loop-1.mp4. Alpha-matte decision deferred to
    Phase 8 (paper background may be kept and multiply-blended instead).
+
+---
+
+# Concept B — Print Shop (riso)
+
+## riso-mark
+1. riso-mark-1 — PASS. Charcoal hand silhouette, amber misreg halo, halftone palm.
+
+## riso-wordmark
+1. (transient HTTP 500, not an attempt)
+2. riso-wordmark-1 — PASS. FRETART correct, heavy grotesque, red offset layer.
+
+## riso-splash
+1. riso-splash-1 — FAIL. Model invented gig-poster text ("MIDNIGHT SESSIONS…")
+   and rendered a photo of a poster (gray backdrop, drop shadow) instead of flat
+   art. Lesson: for poster-style prompts, always state "the artwork itself, not a
+   photograph of a poster" + "absolutely no words or lettering anywhere".
+2. riso-splash-2 — PASS. Full-bleed three-ink riso, both hands, no text.
+
+# Concept C — Blueprint (cyanotype)
+
+## cyano-mark
+1. cyano-mark-1 — PASS. Patent-drawing hand over fret grid, dimension ticks.
+
+## cyano-wordmark
+1. cyano-wordmark-1 — PASS. FRETART correct, drafting caps, dimension line
+   with arrowheads underneath.
+
+## cyano-splash
+1. cyano-splash-1 — PASS. Diagonal neck diagram, fingertip callout circles,
+   authentic cyanotype coating edge. (Tiny illegible tick figures — acceptable
+   as drafting texture, no real words.)

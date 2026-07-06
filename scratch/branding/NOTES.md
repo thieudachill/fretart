@@ -56,7 +56,26 @@ curated picks that graduate to `public/brand/` after the taste gate.
 - Hero loop: `ffmpeg -i in.mp4 -an -c:v libvpx-vp9 -pix_fmt yuva420p` after
   `colorkey` → transparent WebM. Keep an .mp4 fallback with paper baked in.
 
-## 2. Art direction (first principles)
+## 2. Art direction (first principles) — three concepts
+
+Three competing directions (user request 2026-07-07: run the full process 3×),
+each one rooted in a palette the app already ships, so the brand always
+matches what the screen renders. Same QC rubric and 7-attempt rule for all.
+
+- **Concept A — Studio Ink** (§2a, the original): one-line drawing on warm
+  paper. Pillars: Line / Paper / Print restraint.
+- **Concept B — Print Shop**: risograph screen-print poster language. Bold
+  flat shapes, exactly two ink layers printed slightly *misregistered* (the
+  app's own `misreg` param made brand), coarse halftone dot shading. Palette:
+  Ink & Ember — paper `#efe9dc`, amber `#e8a020`, vermilion `#c43a2f`,
+  charcoal `#20242c`. References: riso gig posters, Bauhaus print, stamp art.
+- **Concept C — Blueprint**: cyanotype photogram / technical drawing of
+  music. Thin pale lines `#dcebf2` + mid-blue `#9dbfd6` on Prussian blue
+  paper `#1b3a5c`; dimension ticks, fret-grid geometry, the hand as an
+  engineering diagram. References: Anna Atkins cyanotypes, patent drawings.
+  (Note: here the "paper" is dark — the keyable ground is the *blue*.)
+
+## 2a. Concept A — Studio Ink (first principles)
 
 **What the brand is:** the app makes a guitarist's finger flow visible as ink
 on paper. The brand assets must look like they came off the same desk — a
