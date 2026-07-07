@@ -1,0 +1,342 @@
+/*
+ * FretArt UI chrome — The Human Press applied to the app itself.
+ * Consumes only theme.css tokens. Two moods, one stylesheet:
+ * on stage the UI vanishes (body.ui-hidden), at the desk it is fast:
+ * a thin performance bar on the bottom edge and a studio drawer on the right.
+ */
+
+/* ---- performance bar (bottom edge — the stage controls) ---- */
+
+#perfbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--fa-space-2);
+  padding: 0 var(--fa-space-3);
+  background: var(--fa-paper);
+  border-top: var(--fa-hairline);
+  font-family: var(--fa-font-ui);
+  font-size: var(--fa-text-sm);
+  color: var(--fa-ink);
+  z-index: 40;
+  user-select: none;
+}
+
+body.ui-hidden #perfbar,
+body.ui-hidden #drawer,
+body.ui-hidden #hud {
+  display: none;
+}
+
+/* the groove: one amber ghost, constant direction, on the wordmark only */
+.fa-wordmark {
+  font-family: var(--fa-font-mono);
+  font-weight: 600;
+  font-size: var(--fa-text-sm);
+  letter-spacing: 0.18em;
+  text-shadow: var(--fa-offset-x) var(--fa-offset-y) 0 var(--fa-amber);
+  margin-right: var(--fa-space-2);
+}
+
+.fa-spacer {
+  flex: 1;
+}
+
+.fa-btn {
+  height: 28px;
+  padding: 0 var(--fa-space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fa-space-1);
+  font: inherit;
+  font-size: var(--fa-text-sm);
+  color: var(--fa-ink);
+  background: transparent;
+  border: var(--fa-hairline);
+  border-radius: var(--fa-radius);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--fa-quick) var(--fa-ease);
+}
+.fa-btn:hover {
+  background: var(--fa-paper-deep);
+}
+.fa-btn[aria-pressed='true'] {
+  border-color: var(--fa-ink);
+  background: var(--fa-paper-deep);
+}
+
+/* recording is the one vermilion state in the bar */
+.fa-btn.fa-rec .fa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fa-accent);
+}
+.fa-btn.fa-rec.on {
+  color: var(--fa-paper);
+  background: var(--fa-accent);
+  border-color: var(--fa-accent);
+}
+.fa-btn.fa-rec.on .fa-dot {
+  background: var(--fa-paper);
+  animation: fa-blink 1.2s infinite;
+}
+@keyframes fa-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.fa-btn.fa-rec .fa-time {
+  font-family: var(--fa-font-mono);
+  font-size: var(--fa-text-xs);
+}
+
+.fa-select {
+  height: 28px;
+  max-width: 160px;
+  font: inherit;
+  font-size: var(--fa-text-xs);
+  color: var(--fa-ink);
+  background: var(--fa-paper);
+  border: var(--fa-hairline);
+  border-radius: var(--fa-radius);
+  padding: 0 var(--fa-space-1);
+}
+
+/* preset widget: category in soft ink, name in full ink */
+#fa-preset-btn .fa-cat {
+  color: var(--fa-ink-soft);
+  font-size: var(--fa-text-xs);
+  letter-spacing: 0.04em;
+}
+#fa-preset-btn .fa-name {
+  font-weight: 600;
+}
+
+/* ---- preset browser popover ---- */
+
+.fa-popover {
+  position: fixed;
+  bottom: 52px;
+  left: var(--fa-space-3);
+  width: 340px;
+  max-height: min(60vh, 540px);
+  display: none;
+  flex-direction: column;
+  background: var(--fa-paper);
+  border: 1px solid var(--fa-ink);
+  border-radius: var(--fa-radius);
+  /* print shadow: flat, offset like a second sheet underneath */
+  box-shadow: 4px 4px 0 rgba(32, 36, 44, 0.12);
+  z-index: 50;
+  font-family: var(--fa-font-ui);
+  font-size: var(--fa-text-sm);
+  color: var(--fa-ink);
+}
+.fa-popover.open {
+  display: flex;
+}
+
+.fa-popover input[type='search'] {
+  margin: var(--fa-space-2);
+  padding: var(--fa-space-1) var(--fa-space-2);
+  font: inherit;
+  font-size: var(--fa-text-sm);
+  color: var(--fa-ink);
+  background: var(--fa-paper);
+  border: var(--fa-hairline);
+  border-radius: var(--fa-radius);
+  outline: none;
+}
+.fa-popover input[type='search']:focus {
+  border-color: var(--fa-ink);
+}
+
+.fa-shelves {
+  overflow-y: auto;
+  padding: 0 var(--fa-space-2) var(--fa-space-2);
+}
+
+.fa-shelf-title {
+  font-size: var(--fa-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fa-ink-soft);
+  margin: var(--fa-space-2) var(--fa-space-1) var(--fa-space-1);
+  border-bottom: var(--fa-hairline);
+  padding-bottom: 2px;
+}
+/* the shelf the 1–9 keys currently address */
+.fa-shelf-title.armed {
+  color: var(--fa-ink);
+  border-bottom-color: var(--fa-ink);
+}
+
+.fa-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--fa-space-2);
+  padding: 3px var(--fa-space-1) 3px var(--fa-space-2);
+  border-radius: var(--fa-radius);
+  cursor: pointer;
+  position: relative;
+}
+.fa-item:hover,
+.fa-item.selected {
+  background: var(--fa-paper-deep);
+}
+/* the node dot marks the loaded preset — the still point */
+.fa-item.current::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--fa-accent);
+}
+.fa-item .fa-slot {
+  font-family: var(--fa-font-mono);
+  font-size: var(--fa-text-xs);
+  color: var(--fa-ink-soft);
+  min-width: 1em;
+}
+.fa-item .fa-desc {
+  display: none;
+}
+.fa-item.selected .fa-desc {
+  display: block;
+  flex-basis: 100%;
+  font-size: var(--fa-text-xs);
+  color: var(--fa-ink-soft);
+  padding-left: calc(1em + var(--fa-space-2));
+}
+.fa-item {
+  flex-wrap: wrap;
+}
+
+.fa-popover .fa-hint {
+  border-top: var(--fa-hairline);
+  padding: var(--fa-space-1) var(--fa-space-2);
+  font-size: var(--fa-text-xs);
+  color: var(--fa-ink-soft);
+}
+
+/* ---- studio drawer (right dock, holds the Tweakpane) ---- */
+
+#drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 44px;
+  width: 304px;
+  display: flex;
+  flex-direction: column;
+  background: var(--fa-paper);
+  border-left: var(--fa-hairline);
+  z-index: 35;
+  transition: transform var(--fa-quick) var(--fa-ease);
+}
+#drawer.closed {
+  transform: translateX(100%);
+}
+#drawer-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--fa-space-2);
+  scrollbar-width: thin;
+  scrollbar-color: #b9ad93 transparent;
+}
+
+/* Tweakpane, reskinned to the press: paper surfaces, ink text, hairline
+   grooves. Variables are Tweakpane v4's documented theming hooks. */
+#drawer {
+  --tp-base-background-color: transparent;
+  --tp-base-shadow-color: transparent;
+  --tp-container-background-color: rgba(32, 36, 44, 0.04);
+  --tp-container-background-color-active: rgba(32, 36, 44, 0.1);
+  --tp-container-background-color-focus: rgba(32, 36, 44, 0.08);
+  --tp-container-background-color-hover: rgba(32, 36, 44, 0.07);
+  --tp-container-foreground-color: #20242c;
+  --tp-button-background-color: #e5dcc9;
+  --tp-button-background-color-active: #d8ccb2;
+  --tp-button-background-color-focus: #ddd2ba;
+  --tp-button-background-color-hover: #ddd2ba;
+  --tp-button-foreground-color: #20242c;
+  --tp-groove-foreground-color: #b9ad93;
+  --tp-input-background-color: rgba(32, 36, 44, 0.06);
+  --tp-input-background-color-active: rgba(32, 36, 44, 0.14);
+  --tp-input-background-color-focus: rgba(32, 36, 44, 0.12);
+  --tp-input-background-color-hover: rgba(32, 36, 44, 0.1);
+  --tp-input-foreground-color: #20242c;
+  --tp-label-foreground-color: #4c505a;
+  --tp-monitor-background-color: rgba(32, 36, 44, 0.06);
+  --tp-monitor-foreground-color: #8a4326;
+}
+#drawer .tp-rotv {
+  font-family: var(--fa-font-mono);
+  font-size: var(--fa-text-xs);
+}
+
+/* ---- help overlay (?) ---- */
+
+#help-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(32, 36, 44, 0.35);
+  z-index: 60;
+}
+#help-overlay.open {
+  display: grid;
+}
+.fa-help-card {
+  width: min(520px, 92vw);
+  background: var(--fa-paper);
+  color: var(--fa-ink);
+  border: 1px solid var(--fa-ink);
+  border-radius: var(--fa-radius);
+  box-shadow: 4px 4px 0 rgba(32, 36, 44, 0.12);
+  padding: var(--fa-space-4);
+  font-family: var(--fa-font-ui);
+  font-size: var(--fa-text-sm);
+}
+.fa-help-card h2 {
+  margin: 0 0 var(--fa-space-3);
+  font-size: var(--fa-text-md);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.fa-help-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fa-help-card td {
+  padding: var(--fa-space-1) 0;
+  border-bottom: var(--fa-hairline);
+  vertical-align: top;
+}
+.fa-help-card td:first-child {
+  width: 7em;
+}
+.fa-help-card kbd {
+  font-family: var(--fa-font-mono);
+  font-size: var(--fa-text-xs);
+  border: var(--fa-hairline);
+  border-radius: var(--fa-radius);
+  padding: 1px 5px;
+  background: var(--fa-paper-deep);
+}
+.fa-help-card .fa-close-hint {
+  margin: var(--fa-space-3) 0 0;
+  color: var(--fa-ink-soft);
+  font-size: var(--fa-text-xs);
+}

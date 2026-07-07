@@ -14,9 +14,10 @@ npm test           # Vitest; co-located *.test.ts, shared doubles in src/test/fa
 npm run build
 ```
 
-Hotkeys: `H` hide UI (filming mode) · `F` fullscreen · `D` tracking debug overlay
-· `R` record · `S` PNG snapshot · `J` (dev builds only) record a landmark
-fixture for sim mode.
+Hotkeys: `H` hide UI (filming mode) · `F` fullscreen · `D` tracking debug
+overlay · `R` record · `S` PNG snapshot · `P` preset browser · `[`/`]` preset
+category · `1–9` preset in category · `?` key help · `J` (dev builds only)
+record a landmark fixture for sim mode.
 
 **Sim mode:** `?sim` runs the app without a webcam — `src/tracking/sim.ts`
 substitutes a deterministic synthetic player (canvas stream stands in for the
@@ -170,6 +171,36 @@ the preferred direction.
 - Asset rule: generate → view → rubric-QC → refine, max 7 attempts, then that
   asset pivots to a code-drawn fallback. Boundary: UI chrome and anything
   drawable by code stays code; gen models only illustration/texture/video.
+
+## UI (Phase 6)
+
+- Two surfaces, one principle: on stage the screen is the artwork, at the desk
+  the UI must be fast. `src/ui/perfBar.ts` is the stage strip (bottom bar:
+  preset browser popover, REC + timer, snapshot, camera picker, mic toggle,
+  fullscreen, studio toggle, `?`); `src/ui/panel.ts` is the desk (Tweakpane in
+  the right "studio drawer" `#drawer`, skinned via `--tp-*` vars in
+  `src/ui/ui.css` — all chrome consumes `theme.css` tokens only).
+- `src/ui/presetNav.ts` — pure, unit-tested keyboard model: `[`/`]` cycle the
+  *armed* category, `1–9` load within it; the popover uses
+  `filterShelves`/`flatten`/`moveSelection` for search + arrow keys. Digit
+  hints render only on the armed shelf with no filter active, so they never
+  lie about what the keys do.
+- Hotkeys all route through main.ts. `P` must `preventDefault()` or the "p"
+  lands in the search box it just focused. `H` toggles `body.ui-hidden`
+  (hides bar + drawer + hud via CSS; the REC indicator deliberately stays).
+- Efficiency: drawer folders remember open/closed (`fretart.panel.v1`);
+  drawer open state persists (`fretart.ui.v1`); double-click an effect slider
+  or routing amount resets it; each routing row shows its source's live value
+  (`Panel.tick(features)` from the main loop). Save/delete/export/import live
+  in the drawer's Presets folder; loading lives in the bar.
+- First visit only, the splash waits on a Start button after explaining
+  webcam/mic use + "everything runs locally" (`fretart.welcomed.v1`; `?sim`
+  skips). Splash styles are inline in index.html because it renders before
+  any JS module loads.
+- Headless UI smoke test: puppeteer-core (scratch install, not a repo dep) +
+  the system Chrome against `npm run dev` `?sim` — screenshot the bar,
+  popover, help card, and filming mode, and check the console for errors.
+  This caught the `P`-leak bug; recreate the small script when UI changes.
 
 ## Gotchas
 

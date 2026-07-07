@@ -1,4 +1,5 @@
 import './ui/theme.css';
+import './ui/ui.css';
 import { Engine } from './core/engine';
 import { Camera } from './input/camera';
 import { HandTracker } from './tracking/handTracker';
@@ -15,6 +16,8 @@ import { FixtureRecorder, SimPlayer, type SimFixture } from './tracking/sim';
 import { Recorder } from './recording/recorder';
 import { DebugOverlay } from './ui/debugOverlay';
 import { Panel } from './ui/panel';
+import { PerfBar } from './ui/perfBar';
+import { PresetNav } from './ui/presetNav';
 import { PresetStore } from './ui/presets';
 
 const splash = document.getElementById('splash')!;
@@ -23,6 +26,22 @@ const hud = document.getElementById('hud')!;
 
 function setStatus(text: string): void {
   splashStatus.textContent = text;
+}
+
+/**
+ * First visit: the splash explains webcam/mic use and waits for a click
+ * before any permission prompt appears. After that first consent the app
+ * boots straight into the camera request.
+ */
+async function welcomeGate(): Promise<void> {
+  const WELCOMED = 'fretart.welcomed.v1';
+  if (localStorage.getItem(WELCOMED)) return;
+  const btn = document.getElementById('splash-start') as HTMLButtonElement;
+  setStatus('');
+  btn.style.display = 'block';
+  await new Promise<void>((res) => btn.addEventListener('click', () => res(), { once: true }));
+  localStorage.setItem(WELCOMED, '1');
+  btn.style.display = 'none';
 }
 
 async function boot(): Promise<void> {
@@ -48,6 +67,7 @@ async function boot(): Promise<void> {
     }
     sim = new SimPlayer(fixture);
   } else {
+    await welcomeGate();
     setStatus('requesting webcam…');
     try {
       await camera.start();
@@ -90,27 +110,72 @@ async function boot(): Promise<void> {
   const overlay = new DebugOverlay(document.getElementById('overlay') as HTMLCanvasElement);
   const presets = new PresetStore(engine, matrix);
   presets.load('Line Drawing');
+  const nav = new PresetNav(() => presets.byCategory());
+  nav.syncTo('Line Drawing');
+
+  // Studio drawer open/closed state persists like tracking feel — desk setup.
+  const UI_KEY = 'fretart.ui.v1';
+  const drawer = document.getElementById('drawer')!;
+  let uiState: { drawer: boolean } = { drawer: true };
+  try {
+    Object.assign(uiState, JSON.parse(localStorage.getItem(UI_KEY) ?? '{}'));
+  } catch {
+    // Corrupt entry — keep defaults.
+  }
+  const setDrawer = (open: boolean): void => {
+    drawer.classList.toggle('closed', !open);
+    uiState.drawer = open;
+    localStorage.setItem(UI_KEY, JSON.stringify(uiState));
+  };
+  setDrawer(uiState.drawer);
+
+  const help = document.getElementById('help-overlay')!;
+  const toggleHelp = (): void => {
+    help.classList.toggle('open');
+  };
+  help.addEventListener('pointerdown', (e) => {
+    if (e.target === help) help.classList.remove('open');
+  });
 
   const panel = new Panel({
     engine,
-    camera,
     extractor,
     matrix,
     audio,
     recorder,
     overlay,
     presets,
-    onCameraChange: (deviceId) => void camera.start(deviceId),
+    container: document.getElementById('drawer-scroll')!,
+    onPresetsChanged: () => bar.updatePreset(),
   });
+
+  const bar = new PerfBar({
+    presets,
+    recorder,
+    nav,
+    loadPreset: (name) => {
+      if (presets.load(name)) panel.refresh();
+    },
+    toggleRecording: () => panel.toggleRecording(),
+    snapshot: () => panel.snapshot(),
+    toggleMic: () => panel.toggleMic(),
+    onCameraChange: (deviceId) => void camera.start(deviceId),
+    toggleDrawer: () => setDrawer(drawer.classList.contains('closed')),
+    drawerOpen: () => !drawer.classList.contains('closed'),
+    toggleHelp,
+  });
+  bar.setMic(panel.micOn);
   panel.refresh();
+
+  const uiHidden = (): boolean => document.body.classList.contains('ui-hidden');
 
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     const key = e.key.toLowerCase();
     if (key === 'h') {
-      const hide = !panel.hidden;
-      panel.setHidden(hide);
-      hud.style.display = hide ? 'none' : '';
+      document.body.classList.toggle('ui-hidden');
+      bar.closePopover();
+      help.classList.remove('open');
     } else if (key === 'f') {
       if (document.fullscreenElement) void document.exitFullscreen();
       else void document.documentElement.requestFullscreen();
@@ -121,6 +186,27 @@ async function boot(): Promise<void> {
       panel.toggleRecording();
     } else if (key === 's') {
       panel.snapshot();
+    } else if (key === 'p') {
+      e.preventDefault(); // or the "p" lands in the search box it just focused
+      bar.togglePopover();
+    } else if (key === '[' || key === ']') {
+      const cat = nav.cycleCategory(key === ']' ? 1 : -1);
+      if (cat) {
+        bar.updatePreset();
+        if (uiHidden()) hud.textContent = `category: ${cat}`;
+      }
+    } else if (/^[1-9]$/.test(e.key)) {
+      const name = nav.pick(Number(e.key));
+      if (name && presets.load(name)) {
+        panel.refresh();
+        bar.updatePreset();
+        if (uiHidden()) hud.textContent = `preset: ${name}`;
+      }
+    } else if (e.key === '?') {
+      toggleHelp();
+    } else if (e.key === 'Escape') {
+      help.classList.remove('open');
+      bar.closePopover();
     } else if (key === 'j' && import.meta.env.DEV && tracker) {
       // Dev-only: capture the live landmark stream into a sim fixture
       // (drop the downloaded JSON into public/fixtures/, replay via ?sim=name).
@@ -135,7 +221,7 @@ async function boot(): Promise<void> {
   });
 
   splash.classList.add('hidden');
-  hud.textContent = 'H hide UI · F fullscreen · D overlay · R record · S snapshot';
+  hud.textContent = 'H hide UI · P presets · ? keys';
 
   // Main loop.
   let lastTime = performance.now();
@@ -152,6 +238,7 @@ async function boot(): Promise<void> {
     audio.update(dt);
     const features = extractor.update(raw, dt, engine.view, engine.mirror, now / 1000, audio.features);
     matrix.apply(engine.effects, features);
+    panel.tick(features);
     engine.render(features, dt);
     overlay.draw(features);
 
@@ -161,9 +248,9 @@ async function boot(): Promise<void> {
       fpsShown = Math.round(fpsFrames / fpsAccum);
       fpsAccum = 0;
       fpsFrames = 0;
-      if (hud.style.display !== 'none' && !fixtureRec.recording) {
+      if (!uiHidden() && !fixtureRec.recording) {
         const source = sim ? 'sim replay' : `tracking ${tracker!.inferenceMs.toFixed(1)} ms`;
-        hud.textContent = `${fpsShown} fps · ${source} · H hide UI · F fullscreen · D overlay`;
+        hud.textContent = `${fpsShown} fps · ${source} · H hide UI · P presets · ? keys`;
       }
     }
     requestAnimationFrame(loop);

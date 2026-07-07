@@ -557,6 +557,15 @@ export class PresetStore {
     return [...Object.keys(BUILT_IN_PRESETS), ...Object.keys(this.readStorage())];
   }
 
+  describe(name: string): string | undefined {
+    return (BUILT_IN_PRESETS[name] ?? this.readStorage()[name])?.description;
+  }
+
+  /** Built-ins can't be deleted; only names living in localStorage can. */
+  isUserSave(name: string): boolean {
+    return name in this.readStorage();
+  }
+
   save(name: string): void {
     const all = this.readStorage();
     all[name] = this.capture();

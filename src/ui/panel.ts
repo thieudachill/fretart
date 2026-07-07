@@ -1,9 +1,9 @@
 import { Pane } from 'tweakpane';
-import type { ButtonApi, FolderApi } from 'tweakpane';
+import type { FolderApi } from 'tweakpane';
 import { PALETTE_OPTIONS } from '../core/types';
 import type { Engine } from '../core/engine';
-import { Camera } from '../input/camera';
-import { FEATURE_SOURCES, FeatureExtractor } from '../tracking/features';
+import { FEATURE_SOURCES, FeatureExtractor, getFeatureValue } from '../tracking/features';
+import type { FrameFeatures } from '../core/types';
 import { ModMatrix } from '../mapping/modMatrix';
 import { AudioEngine } from '../audio/audioEngine';
 import type { Recorder } from '../recording/recorder';
@@ -12,26 +12,30 @@ import { PresetStore } from './presets';
 
 export interface PanelDeps {
   engine: Engine;
-  camera: Camera;
   extractor: FeatureExtractor;
   matrix: ModMatrix;
   audio: AudioEngine;
   recorder: Recorder;
   overlay: DebugOverlay;
   presets: PresetStore;
-  onCameraChange(deviceId: string): void;
+  /** Where the Tweakpane mounts — the studio drawer's scroll area. */
+  container: HTMLElement;
+  /** Fired after save/delete so the performance bar can re-shelve. */
+  onPresetsChanged(): void;
 }
 
+const FOLDER_STATE_KEY = 'fretart.panel.v1';
+
 /**
- * The whole control surface: global settings, one folder per effect
- * (auto-generated from its param schema), modulation routings, presets,
- * and recording. Hotkeys: H hide UI, F fullscreen, D debug overlay.
+ * The studio drawer: deep sound-design controls, one Tweakpane in the right
+ * dock. Stage-time actions (preset load, record, devices, fullscreen) live in
+ * the performance bar — this panel is for shaping a look. Folders remember
+ * their open/closed state; double-click any effect slider to reset it.
  */
 export class Panel {
   private pane: Pane;
   private paletteBinding = { palette: 0 };
-  private cameraBinding = { device: '' };
-  private presetBinding = { preset: '', name: 'my preset' };
+  private presetBinding = { name: 'my preset' };
   private trackingBinding = { response: 0.5, anticipate: 30 };
   private audioBinding = { listen: false, device: '', sensitivity: 1 };
   private recBinding: { fps: number; quality: 'share' | 'master'; audio: boolean } = {
@@ -39,11 +43,18 @@ export class Panel {
     quality: 'share',
     audio: true,
   };
-  private recButton!: ButtonApi;
   private recTimer = 0;
+  private folderState: Record<string, boolean> = {};
+  /** Live source values shown next to each routing (updated by tick()). */
+  private liveVals: { value: number }[] = [];
 
   constructor(private deps: PanelDeps) {
-    this.pane = new Pane({ title: 'FRETART' });
+    try {
+      this.folderState = JSON.parse(localStorage.getItem(FOLDER_STATE_KEY) ?? '{}');
+    } catch {
+      this.folderState = {};
+    }
+    this.pane = new Pane({ title: 'Studio', container: deps.container });
     this.buildGlobal();
     this.buildTracking();
     this.buildAudio();
@@ -53,25 +64,26 @@ export class Panel {
     this.buildPresets();
   }
 
+  /** addFolder that remembers its open/closed state across sessions. */
+  private folder(title: string, defaultExpanded: boolean, parent?: FolderApi): FolderApi {
+    const host = parent ?? this.pane;
+    const f = host.addFolder({ title, expanded: this.folderState[title] ?? defaultExpanded });
+    f.on('fold', (ev) => {
+      this.folderState[title] = ev.expanded;
+      localStorage.setItem(FOLDER_STATE_KEY, JSON.stringify(this.folderState));
+    });
+    return f;
+  }
+
   private buildGlobal(): void {
     const { engine, overlay } = this.deps;
-    const f = this.pane.addFolder({ title: 'Global' });
+    const f = this.folder('Global', true);
     f.addBinding(engine, 'mirror', { label: 'mirror view' });
     f.addBinding(engine, 'videoOpacity', { label: 'video opacity', min: 0, max: 1, step: 0.01 });
     this.paletteBinding.palette = engine.paletteIndex;
     f.addBinding(this.paletteBinding, 'palette', { label: 'ink palette', options: PALETTE_OPTIONS })
       .on('change', (ev) => engine.setPalette(ev.value));
     f.addBinding(overlay, 'visible', { label: 'debug overlay (D)' });
-    f.addButton({ title: 'Fullscreen (F)' }).on('click', () => this.toggleFullscreen());
-
-    // Camera picker populates once permission is granted (labels need it).
-    Camera.listDevices().then((devices) => {
-      if (devices.length < 2) return;
-      const options = Object.fromEntries(devices.map((d) => [d.label, d.deviceId]));
-      this.cameraBinding.device = devices[0].deviceId;
-      f.addBinding(this.cameraBinding, 'device', { label: 'camera', options })
-        .on('change', (ev) => this.deps.onCameraChange(ev.value));
-    });
   }
 
   /**
@@ -89,7 +101,7 @@ export class Panel {
     }
     this.applyTracking();
 
-    const f = this.pane.addFolder({ title: 'Tracking feel', expanded: false });
+    const f = this.folder('Tracking feel', false);
     f.addBinding(this.trackingBinding, 'response', {
       label: 'response (calm↔snap)',
       min: 0,
@@ -127,31 +139,11 @@ export class Panel {
     }
     audio.sensitivity = this.audioBinding.sensitivity;
 
-    const f = this.pane.addFolder({ title: 'Audio (mic)', expanded: false });
-    const persist = () =>
-      localStorage.setItem('fretart.audio.v1', JSON.stringify(this.audioBinding));
-
-    const setListening = (on: boolean) => {
-      if (!on) {
-        audio.stop();
-        persist();
-        return;
-      }
-      audio
-        .start(this.audioBinding.device || undefined)
-        .then(() => {
-          persist();
-          void this.populateMics(f);
-        })
-        .catch((err) => {
-          console.error('Mic access failed', err);
-          this.audioBinding.listen = false;
-          this.pane.refresh();
-        });
-    };
+    const f = this.folder('Audio (mic)', false);
+    this.audioFolder = f;
 
     f.addBinding(this.audioBinding, 'listen', { label: 'listen (guitar → visuals)' })
-      .on('change', (ev) => setListening(ev.value));
+      .on('change', (ev) => void this.setListening(ev.value));
     f.addBinding(this.audioBinding, 'sensitivity', {
       label: 'sensitivity',
       min: 0.25,
@@ -159,7 +151,7 @@ export class Panel {
       step: 0.05,
     }).on('change', (ev) => {
       audio.sensitivity = ev.value;
-      persist();
+      this.persistAudio();
     });
     f.addBinding(audio.features, 'level', {
       label: 'input level',
@@ -172,7 +164,43 @@ export class Panel {
 
     // Honor a persisted "listen" from the last session. The AudioContext may
     // start suspended without a gesture; main.ts resumes it on first input.
-    if (this.audioBinding.listen) setListening(true);
+    if (this.audioBinding.listen) void this.setListening(true);
+  }
+
+  private audioFolder!: FolderApi;
+
+  private persistAudio(): void {
+    localStorage.setItem('fretart.audio.v1', JSON.stringify(this.audioBinding));
+  }
+
+  private async setListening(on: boolean): Promise<void> {
+    const { audio } = this.deps;
+    if (!on) {
+      audio.stop();
+      this.audioBinding.listen = false;
+      this.persistAudio();
+      return;
+    }
+    try {
+      await audio.start(this.audioBinding.device || undefined);
+      this.audioBinding.listen = true;
+      this.persistAudio();
+      void this.populateMics(this.audioFolder);
+    } catch (err) {
+      console.error('Mic access failed', err);
+      this.audioBinding.listen = false;
+    }
+    this.pane.refresh();
+  }
+
+  /** One code path for the drawer toggle and the bar's Mic button. */
+  async toggleMic(): Promise<boolean> {
+    await this.setListening(!this.audioBinding.listen);
+    return this.audioBinding.listen;
+  }
+
+  get micOn(): boolean {
+    return this.audioBinding.listen;
   }
 
   private micRow: { dispose(): void } | null = null;
@@ -189,13 +217,14 @@ export class Panel {
         if (this.audioBinding.listen) {
           void this.deps.audio.start(ev.value).catch((err) => console.error(err));
         }
-        localStorage.setItem('fretart.audio.v1', JSON.stringify(this.audioBinding));
+        this.persistAudio();
       });
   }
 
   /**
    * A recording is the performance — image and sound. Options are device/
    * delivery choices, so they persist like tracking feel, outside presets.
+   * The start/stop button itself lives in the performance bar.
    */
   private buildRecording(): void {
     const { recorder } = this.deps;
@@ -213,7 +242,7 @@ export class Panel {
     };
     persist();
 
-    const f = this.pane.addFolder({ title: 'Recording', expanded: false });
+    const f = this.folder('Recording', false);
     f.addBinding(this.recBinding, 'fps', { label: 'fps', options: { '30': 30, '60': 60 } })
       .on('change', persist);
     f.addBinding(this.recBinding, 'quality', {
@@ -221,24 +250,19 @@ export class Panel {
       options: { 'share (8 Mbps)': 'share', 'master (24 Mbps)': 'master' },
     }).on('change', persist);
     f.addBinding(this.recBinding, 'audio', { label: 'record sound (mic)' }).on('change', persist);
-    this.recButton = f.addButton({ title: '● Start recording (R)' });
-    this.recButton.on('click', () => this.toggleRecording());
-    f.addButton({ title: 'Snapshot PNG (S)' }).on('click', () => this.snapshot());
   }
 
-  /** One code path for the button and the R hotkey, so they never disagree. */
+  /** One code path for the bar button and the R hotkey, so they never disagree. */
   toggleRecording(): void {
     const { recorder, engine, audio, presets } = this.deps;
     const indicator = document.getElementById('rec-indicator')!;
     const time = document.getElementById('rec-time');
     if (recorder.recording) {
       recorder.stop();
-      this.recButton.title = '● Start recording (R)';
       indicator.classList.remove('on');
       clearInterval(this.recTimer);
     } else {
       recorder.start(engine.canvas, audio.audioTrack, presets.currentName);
-      this.recButton.title = '■ Stop & save (R)';
       indicator.classList.add('on');
       if (time) time.textContent = '0:00';
       this.recTimer = window.setInterval(() => {
@@ -254,14 +278,19 @@ export class Panel {
 
   private buildEffects(): void {
     for (const effect of this.deps.engine.effects) {
-      const f = this.pane.addFolder({ title: effect.label, expanded: false });
+      const f = this.folder(effect.label, false);
       f.addBinding(effect, 'enabled', { label: 'enabled' });
       for (const def of effect.paramDefs) {
-        f.addBinding(effect.values, def.key, {
+        const b = f.addBinding(effect.values, def.key, {
           label: def.label,
           min: def.min,
           max: def.max,
           step: def.step ?? (def.max - def.min) / 100,
+        });
+        // Double-click a slider row = back to the effect's default.
+        b.element.addEventListener('dblclick', () => {
+          effect.values[def.key] = def.default;
+          b.refresh();
         });
       }
     }
@@ -269,42 +298,62 @@ export class Panel {
 
   private buildModulation(): void {
     const { matrix, engine } = this.deps;
-    const f = this.pane.addFolder({ title: 'Finger → Param routing', expanded: false });
+    const f = this.folder('Finger → Param routing', false);
     const sourceOptions: Record<string, string> = { '— none —': '' };
     for (const s of FEATURE_SOURCES) sourceOptions[s.label] = s.id;
     const targetOptions = ModMatrix.targetOptions(engine.effects);
 
     matrix.routings.forEach((routing, i) => {
-      const slot = f.addFolder({ title: `Route ${i + 1}`, expanded: i === 0 });
+      const slot = this.folder(`Route ${i + 1}`, i === 0, f);
       slot.addBinding(routing, 'enabled', { label: 'active' });
       slot.addBinding(routing, 'source', { label: 'from', options: sourceOptions });
       slot.addBinding(routing, 'target', { label: 'to', options: targetOptions });
-      slot.addBinding(routing, 'amount', { label: 'amount', min: -1, max: 1, step: 0.01 });
+      const amount = slot.addBinding(routing, 'amount', {
+        label: 'amount',
+        min: -1,
+        max: 1,
+        step: 0.01,
+      });
+      amount.element.addEventListener('dblclick', () => {
+        routing.amount = 0;
+        amount.refresh();
+      });
+      // Live value of the routed source — sound design with eyes open.
+      const live = { value: 0 };
+      this.liveVals.push(live);
+      slot.addBinding(live, 'value', {
+        label: 'live',
+        readonly: true,
+        format: (v: number) => v.toFixed(2),
+        interval: 100,
+      });
+    });
+  }
+
+  /** Feed per-frame features so the routing rows can show live source values. */
+  tick(features: FrameFeatures): void {
+    this.deps.matrix.routings.forEach((routing, i) => {
+      const live = this.liveVals[i];
+      if (live) live.value = routing.source ? getFeatureValue(features, routing.source) : 0;
     });
   }
 
   private buildPresets(): void {
-    const { presets } = this.deps;
-    const f = this.pane.addFolder({ title: 'Presets', expanded: false });
-
-    let dropdown = this.addPresetDropdown(f);
-    const rebuildDropdown = () => {
-      dropdown.dispose();
-      dropdown = this.addPresetDropdown(f);
-    };
+    const { presets, onPresetsChanged } = this.deps;
+    const f = this.folder('Presets', false);
 
     f.addBinding(this.presetBinding, 'name', { label: 'save as' });
     f.addButton({ title: 'Save preset' }).on('click', () => {
       const name = this.presetBinding.name.trim();
       if (!name) return;
       presets.save(name);
-      rebuildDropdown();
+      onPresetsChanged();
     });
-    f.addButton({ title: 'Delete selected' }).on('click', () => {
-      if (this.presetBinding.preset) {
-        presets.delete(this.presetBinding.preset);
-        rebuildDropdown();
-      }
+    f.addButton({ title: 'Delete current (user saves only)' }).on('click', () => {
+      if (!presets.isUserSave(presets.currentName)) return;
+      presets.delete(presets.currentName);
+      presets.currentName = '';
+      onPresetsChanged();
     });
     f.addButton({ title: 'Export JSON' }).on('click', () => presets.exportCurrent());
     f.addButton({ title: 'Import JSON' }).on('click', () =>
@@ -312,43 +361,9 @@ export class Panel {
     );
   }
 
-  private addPresetDropdown(f: FolderApi) {
-    // Interim category UI until the Phase-6 preset browser: shelf the
-    // dropdown by category with short prefixes ('Audio · Pluck Bloom').
-    const SHORT: Record<string, string> = {
-      'Line & Shape': 'Line',
-      'Print & Paper': 'Print',
-      'Motion & Light': 'Motion',
-      'Audio Reactive': 'Audio',
-      'Collage & Mixed': 'Collage',
-    };
-    const options: Record<string, string> = {};
-    for (const [cat, names] of Object.entries(this.deps.presets.byCategory())) {
-      for (const name of names) options[`${SHORT[cat] ?? cat} · ${name}`] = name;
-    }
-    return f
-      .addBinding(this.presetBinding, 'preset', { label: 'load', options, index: 0 })
-      .on('change', (ev) => {
-        if (this.deps.presets.load(ev.value)) this.refresh();
-      });
-  }
-
   /** Sync all widgets after presets change values behind the UI's back. */
   refresh(): void {
     this.paletteBinding.palette = this.deps.engine.paletteIndex;
     this.pane.refresh();
-  }
-
-  get hidden(): boolean {
-    return this.pane.element.style.display === 'none';
-  }
-
-  setHidden(hidden: boolean): void {
-    this.pane.element.style.display = hidden ? 'none' : '';
-  }
-
-  private toggleFullscreen(): void {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void document.documentElement.requestFullscreen();
   }
 }
