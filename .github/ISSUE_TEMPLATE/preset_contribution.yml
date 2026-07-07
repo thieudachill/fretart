@@ -1,0 +1,42 @@
+name: Preset contribution
+description: Share a look you designed — attach the exported JSON
+labels: [preset]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Preset name
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Line & Shape
+        - Print & Paper
+        - Motion & Light
+        - Audio Reactive
+        - Collage & Mixed
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: One-line description
+      description: The line shown in the preset browser. Concrete beats poetic.
+    validations:
+      required: true
+  - type: textarea
+    id: json
+    attributes:
+      label: Exported JSON
+      description: Studio drawer → Presets → Export, paste the relevant preset here.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: What it looks like
+      description: A snapshot (S) or short clip (R) while actually playing. This is what gets it merged.

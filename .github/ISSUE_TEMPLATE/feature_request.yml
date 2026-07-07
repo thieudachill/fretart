@@ -1,0 +1,29 @@
+name: Feature request
+description: An idea for an effect, source, preset, or workflow
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What should exist, and what would it look or feel like while playing?
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: Visual references (optional)
+      description: Links or descriptions — art, prints, other generative work. FretArt leans muted/ink-on-paper.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New effect / visual layer
+        - New preset
+        - New palette
+        - Audio / tracking feature
+        - UI / workflow
+        - Other
+    validations:
+      required: true

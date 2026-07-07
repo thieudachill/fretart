@@ -19,6 +19,13 @@ overlay · `R` record · `S` PNG snapshot · `P` preset browser · `[`/`]` prese
 category · `1–9` preset in category · `?` key help · `J` (dev builds only)
 record a landmark fixture for sim mode.
 
+Contributor-facing docs live in `docs/` (architecture, creating-effects,
+creating-presets, audio) + README/CONTRIBUTING/CHANGELOG — when behavior or
+APIs described there change, update them in the same commit as this file.
+README hero media is deliberately absent until the brand taste gate closes
+and the user records real playing (sim-mode screenshots were tried and
+rejected — synthetic hands read as slivers).
+
 **Sim mode:** `?sim` runs the app without a webcam — `src/tracking/sim.ts`
 substitutes a deterministic synthetic player (canvas stream stands in for the
 video). `?sim=<name>` replays `public/fixtures/<name>.json` recorded with `J`.

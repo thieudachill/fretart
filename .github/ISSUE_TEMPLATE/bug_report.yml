@@ -1,0 +1,44 @@
+name: Bug report
+description: Something broken or misbehaving
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Load preset …
+        2. Press …
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Browser + version, OS, GPU if you know it.
+      placeholder: Chrome 138 / Windows 11 / RTX 3060
+    validations:
+      required: true
+  - type: dropdown
+    id: sim
+    attributes:
+      label: Does it also happen in sim mode (?sim, no webcam needed)?
+      options:
+        - "Yes"
+        - "No"
+        - Didn't try
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Open devtools (F12) → Console; paste anything red.
+      render: text
