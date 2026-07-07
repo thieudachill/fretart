@@ -11,7 +11,7 @@
       <feColorMatrix in="f" type="matrix" values="0 0 0 0 0.64  0 0 0 0 0.55  0 0 0 0 0.42  0 0 0 0.03 0"/>
     </filter>
   </defs>
-  <rect width="512" height="512" fill="#f5f1e6"/>
+  <rect width="512" height="512" fill="#efe9dc"/>
   <rect width="512" height="512" filter="url(#grain)"/>
   <rect width="512" height="512" filter="url(#flecks)"/>
 </svg>

@@ -2,8 +2,8 @@
 /**
  * Brand asset generator — Gemini image (Interactions API) + Veo video.
  * Reads GEMINI_API_KEY / GEMINI_IMAGE_MODEL / GEMINI_VIDEO_MODEL from .env.
- * Outputs land in scratch/branding/ and are NEVER committed; curated picks
- * are copied to public/brand/ by hand after the taste gate.
+ * Outputs land in scratch/branding/out/ (git-ignored, NEVER committed);
+ * curated picks are copied to public/brand/ by hand after the taste gate.
  *
  *   node scripts/genAsset.mjs image <slug> "<prompt>" [--ar 1:1] [--edit file.jpg] [--prev <id>]
  *   node scripts/genAsset.mjs video <slug> "<prompt>" --first frame.jpg [--last frame.jpg]
@@ -18,7 +18,7 @@ import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = resolve(root, 'scratch/branding');
+const outDir = resolve(root, 'scratch/branding/out');
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 function loadEnv() {

@@ -177,7 +177,8 @@ code draws it (SVG/canvas), or the asset is descoped/simplified.
 
 Rubric (all must pass):
 1. **Anatomy/spelling** — five fingers, plausible hand, every letter correct.
-2. **Keyable ground** — background is flat, even `#f5f1e6`, edge to edge.
+2. **Keyable ground** — background is flat and even edge to edge, in the
+   concept's exact paper color (B v2 / The Human Press: `#efe9dc`).
 3. **Line quality** — reads as one continuous line; no hatching, no sketch
    fuzz, no double strokes.
 4. **Palette** — only paper/graphite/vermilion(/warm gray). No stray hues.

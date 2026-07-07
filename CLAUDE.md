@@ -148,9 +148,14 @@ the preferred direction.
 
 ## Brand (Phase 5)
 
-- Design tokens in `src/ui/theme.css` (`--fa-*`): Studio Ink as UI chrome —
-  paper/ink/wash/one vermilion accent. Mirrors `PALETTES` 'Studio Ink'; change
-  both together. Imported in `main.ts`; consumed by the Phase-6 UI + landing.
+- Brand = Concept B "The Human Press" (chosen 2026-07-07; manifesto in
+  `scratch/branding/NOTES.md` §2b): paper=silence, each ink=a voice (≤3),
+  overlap=harmony, misregistration=groove (one constant offset direction),
+  halftone=resonance (dots gather at still points), standing wave + node dots
+  = signature motif. Design tokens in `src/ui/theme.css` (`--fa-*`) mirror
+  `PALETTES` 'Ink & Ember' — change both together; semantic tokens include
+  `--fa-overlap` (harmony color) and `--fa-offset-x/y` (the groove). Imported
+  in `main.ts`; consumed by the Phase-6 UI + landing.
 - `scripts/genAsset.mjs` — CLI for brand illustration/video via Gemini
   (`GEMINI_API_KEY` + model ids in `.env`, never committed). Output goes to
   `scratch/branding/out/` (git-ignored); curated picks graduate to
