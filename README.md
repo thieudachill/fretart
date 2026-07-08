@@ -3,6 +3,8 @@
 [![CI](https://github.com/thieudachill/fretart/actions/workflows/ci.yml/badge.svg)](https://github.com/thieudachill/fretart/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-4c505a)](LICENSE)
 
+**[fretart.nguyenthaithieu.workers.dev](https://fretart.nguyenthaithieu.workers.dev)** — the landing page.
+
 <!-- hero media: brand mark + a real playing capture (gif/mp4 from the in-app
      recorder) land here once curated — see docs/media notes in CONTRIBUTING. -->
 

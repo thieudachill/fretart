@@ -36,5 +36,9 @@ Everything below ships together as **v1.0.0** — the first public release.
   full development without a webcam; dev hotkey `J` records fixtures.
 - **Docs**: architecture, creating effects, creating presets, audio; full
   README; contributor scaffolding.
+- **Brand & landing page**: "The Human Press" identity (curated assets in
+  `public/brand/`), Astro landing site in `landing/` deployed to
+  [fretart.nguyenthaithieu.workers.dev](https://fretart.nguyenthaithieu.workers.dev)
+  via Cloudflare Workers, auto-redeployed on `landing/**` changes.
 
 [Unreleased]: https://github.com/thieudachill/fretart/commits/main

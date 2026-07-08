@@ -1,0 +1,314 @@
+---
+// FretArt landing — "The Human Press", built from the Phase-8a concept board
+// (scratch/branding/landing-concept.html). Static, zero client JS except the
+// hero-video motion gate below.
+const site = Astro.site ?? new URL('https://fretart.workers.dev');
+const og = new URL('/brand/og.jpg', site);
+const description =
+  'FretArt turns a webcam and a guitar into live screen-print art — every ' +
+  'fingertip tracked, every pluck heard. Free, open source, runs entirely in your browser.';
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FretArt — your fingers are already drawing</title>
+<meta name="description" content={description} />
+<meta name="theme-color" content="#efe9dc" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="canonical" href={site.href} />
+<link rel="preload" href="/fonts/archivo-black.woff2" as="font" type="font/woff2" crossorigin />
+<meta property="og:title" content="FretArt — your fingers are already drawing" />
+<meta property="og:description" content={description} />
+<meta property="og:type" content="website" />
+<meta property="og:url" content={site.href} />
+<meta property="og:image" content={og.href} />
+<meta name="twitter:card" content="summary_large_image" />
+
+<style is:global>
+  /* Tokens mirror src/ui/theme.css — The Human Press */
+  :root {
+    --paper: #efe9dc;
+    --paper-deep: #e5dcc9;
+    --ink: #20242c;
+    --ink-soft: #4c505a;
+    --amber: #e8a020;
+    --accent: #c43a2f;
+    /* accent darkened one step for AA contrast on small text (4.35:1 → 5.2:1
+       on paper); decorative accents (node dots, bullets) keep the true ink */
+    --accent-text: #b0332a;
+    --off-x: -2px;
+    --off-y: -1px;
+    --hairline: 1px solid #b9ad93;
+    --mono: 'IBM Plex Mono', 'Consolas', monospace;
+    --ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --display: 'Archivo Black', 'Arial Black', 'Segoe UI Black', sans-serif;
+  }
+  @font-face {
+    /* Archivo Black — SIL Open Font License 1.1, © Omnibus-Type */
+    font-family: 'Archivo Black';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/archivo-black.woff2') format('woff2');
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); font-family: var(--ui); color: var(--ink); }
+  .frame { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  /* top strip */
+  .topstrip { border-bottom: var(--hairline); }
+  .topstrip .frame {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding-top: 0.7rem; padding-bottom: 0.7rem;
+  }
+  .topstrip .mark {
+    width: 34px; height: 34px; border-radius: 3px;
+    mix-blend-mode: multiply; flex-shrink: 0;
+  }
+  .topstrip .name {
+    font-family: var(--mono); font-weight: 600;
+    letter-spacing: 0.22em; font-size: 0.85rem;
+  }
+  .topstrip a {
+    margin-left: auto; font-family: var(--mono); font-size: 0.8rem;
+    color: var(--accent-text); text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+
+  /* hero */
+  .hero video {
+    width: 100%; display: block; mix-blend-mode: multiply;
+    aspect-ratio: 16 / 9; object-fit: cover; background: var(--paper);
+  }
+  .hero-copy { padding: 3.2rem 0 3.6rem; border-top: var(--hairline); }
+  h1 {
+    font-family: var(--display); font-weight: 400; line-height: 1.04;
+    font-size: clamp(2.4rem, 5.6vw, 4.2rem); letter-spacing: -0.01em;
+    text-shadow: calc(var(--off-x) * 2) calc(var(--off-y) * 2) 0 var(--amber);
+    max-width: 15ch;
+  }
+  .lede {
+    margin-top: 1.4rem; font-size: 1.06rem; line-height: 1.65;
+    color: var(--ink-soft); max-width: 54ch;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; align-items: center; }
+  .clone {
+    font-family: var(--mono); font-size: 0.88rem; background: var(--paper-deep);
+    border: var(--hairline); padding: 0.7rem 1rem; border-radius: 3px;
+  }
+  .clone::before { content: '$ '; color: var(--accent-text); }
+  .gh {
+    font-family: var(--mono); font-size: 0.88rem; color: var(--paper);
+    background: var(--ink); padding: 0.72rem 1.2rem; border-radius: 3px;
+    text-decoration: none;
+    box-shadow: calc(var(--off-x) * 2) calc(var(--off-y) * 2) 0 var(--amber);
+  }
+
+  /* standing-wave divider — the brand divider, code-drawn */
+  .wavewrap { padding: 1.6rem 0 0.4rem; }
+  .wave { display: block; margin: 0 auto; }
+
+  /* feature moments */
+  .moment { padding: 4rem 0; }
+  .moment .frame {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+  }
+  .moment.flip .art { order: 2; }
+  .moment .art img { width: 100%; height: auto; display: block; mix-blend-mode: multiply; }
+  .kicker {
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.24em;
+    color: var(--accent-text); margin-bottom: 0.9rem;
+  }
+  .kicker::before { content: '● '; font-size: 0.6rem; vertical-align: 2px; color: var(--accent); }
+  .moment h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(1.5rem, 2.8vw, 2.1rem); line-height: 1.12;
+    text-shadow: var(--off-x) var(--off-y) 0 var(--amber);
+  }
+  .moment p { margin-top: 0.9rem; color: var(--ink-soft); line-height: 1.65; max-width: 44ch; }
+
+  /* quickstart */
+  .quick { padding: 4.5rem 0; border-top: var(--hairline); }
+  .quick h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    text-shadow: var(--off-x) var(--off-y) 0 var(--amber);
+  }
+  .steps {
+    margin-top: 1.6rem; font-family: var(--mono); font-size: 0.92rem; line-height: 2.1;
+    background: var(--ink); color: var(--paper); padding: 1.3rem 1.6rem; border-radius: 3px;
+    box-shadow: calc(var(--off-x) * 3) calc(var(--off-y) * 3) 0 var(--amber);
+    overflow-x: auto; white-space: nowrap;
+  }
+  .steps .p { color: var(--amber); user-select: none; }
+  .quick .fine {
+    margin-top: 1.3rem; color: var(--ink-soft); font-size: 0.92rem;
+    line-height: 1.7; max-width: 60ch;
+  }
+  .quick .fine code {
+    font-family: var(--mono); background: var(--paper-deep);
+    padding: 0.05rem 0.35rem; border-radius: 3px;
+  }
+
+  /* footer */
+  footer { border-top: var(--hairline); }
+  footer .frame {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.4rem;
+    padding-top: 1.4rem; padding-bottom: 1.6rem;
+    font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft);
+  }
+  footer a {
+    color: var(--accent-text); text-decoration: underline;
+    text-decoration-thickness: 1px; text-underline-offset: 3px;
+  }
+  footer .dot { color: var(--accent); }
+  footer .right { margin-left: auto; }
+
+  @media (max-width: 760px) {
+    .moment { padding: 2.6rem 0; }
+    .moment .frame { grid-template-columns: 1fr; gap: 1.6rem; }
+    .moment.flip .art { order: 0; }
+    .frame { padding: 0 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topstrip">
+  <div class="frame">
+    <img class="mark" src="/brand/mark-crop.webp" width="34" height="34" alt="FretArt mark — a fingertip touching a string node" />
+    <span class="name">FRETART</span>
+    <a href="https://github.com/thieudachill/fretart">GitHub ↗</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <!-- The riso loop IS the masthead print. The motion gate below only plays
+         it when the visitor hasn't asked for reduced motion / data saving;
+         otherwise the poster (hero still) is the masthead. -->
+    <video id="hero-video" poster="/brand/hero-still.webp" muted loop playsinline
+           preload="none" aria-hidden="true">
+      <source src="/brand/hero-loop.mp4" type="video/mp4" />
+    </video>
+    <script is:inline>
+      (function () {
+        var v = document.getElementById('hero-video');
+        var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var conn = navigator.connection || {};
+        if (!reduced && conn.saveData !== true) {
+          // set the autoplay flag and (re)start resource selection rather than
+          // racing a play() promise at parse time — the source child may not
+          // have been picked up yet under preload="none"
+          v.autoplay = true;
+          v.preload = 'auto';
+          v.load();
+        }
+      })();
+    </script>
+    <div class="hero-copy">
+      <div class="frame">
+        <h1>Your fingers are already drawing.</h1>
+        <p class="lede">FretArt turns a webcam and a guitar into live screen-print art —
+        every fingertip tracked, every pluck heard. Free and open source.
+        Runs entirely in your browser; nothing leaves your machine.</p>
+        <div class="cta-row">
+          <span class="clone">git clone https://github.com/thieudachill/fretart</span>
+          <a class="gh" href="https://github.com/thieudachill/fretart">View on GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wavewrap">
+    <svg class="wave" width="360" height="40" viewBox="0 0 360 40" fill="none" aria-hidden="true">
+      <line x1="0" y1="20" x2="60" y2="20" stroke="#20242c" stroke-width="1.5"/>
+      <path d="M60 20 C 105 -8, 135 -8, 180 20 S 255 48, 300 20" stroke="#20242c" stroke-width="1.5"/>
+      <line x1="300" y1="20" x2="360" y2="20" stroke="#20242c" stroke-width="1.5"/>
+      <circle cx="60" cy="20" r="3.5" fill="#c43a2f"/>
+      <circle cx="300" cy="20" r="3.5" fill="#c43a2f"/>
+    </svg>
+  </div>
+
+  <!-- Art sides run left, right, right — the alternation breaks exactly once. -->
+  <section class="moment">
+    <div class="frame">
+      <div class="art">
+        <img src="/brand/spot-hands.webp" width="900" height="1117" loading="lazy"
+             alt="Riso print of a fretting hand pressing a red node on a string" />
+      </div>
+      <div>
+        <p class="kicker">01 — HANDS</p>
+        <h2>Every fingertip, tracked live.</h2>
+        <p>Twenty-one points per hand, smoothed and anticipated, so the lines land where
+        your fingers are — not where they were.</p>
+        <!-- CAPTURE SLOT: real snapshot/clip, preset "Line Drawing" (S/R in app) -->
+      </div>
+    </div>
+  </section>
+
+  <section class="moment flip">
+    <div class="frame">
+      <div class="art">
+        <img src="/brand/spot-sound.webp" width="900" height="1117" loading="lazy"
+             alt="Riso print of a releasing hand over rosette arcs" />
+      </div>
+      <div>
+        <p class="kicker">02 — SOUND</p>
+        <h2>It listens while it watches.</h2>
+        <p>Level, pluck attack, register — the mic routes to any visual parameter.
+        Notes bloom the instant you play them.</p>
+        <!-- CAPTURE SLOT: real clip with sound, preset "Pluck Bloom" (R in app) -->
+      </div>
+    </div>
+  </section>
+
+  <section class="moment flip">
+    <div class="frame">
+      <div class="art">
+        <img src="/brand/splash.webp" width="1100" height="738" loading="lazy"
+             alt="Riso print of sound spreading through matter — standing wave over a fretboard" />
+      </div>
+      <div>
+        <p class="kicker">03 — PRINT</p>
+        <h2>A print shop at 60 fps.</h2>
+        <p>Halftone, misregistration, folded paper — screen-print craft,
+        redrawn live in WebGL.</p>
+        <!-- CAPTURE SLOT: real snapshot, preset "Print Pyramid" or "Print Window" (S) -->
+      </div>
+    </div>
+  </section>
+
+  <!-- IN PERFORMANCE band: full-bleed real recording (10–20 s loop, muted)
+       drops in here once captured. -->
+
+  <section class="quick">
+    <div class="frame">
+      <h2>On stage in two minutes.</h2>
+      <div class="steps">
+        <span class="p">$</span> git clone https://github.com/thieudachill/fretart<br />
+        <span class="p">$</span> cd fretart &amp;&amp; npm install<br />
+        <span class="p">$</span> npm run dev
+      </div>
+      <p class="fine">Chrome or Edge, a webcam, and light on your hands. Setup fetches the
+      hand-tracking model once; after that everything runs locally. Press <code>?</code> in the
+      app for the keys.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="frame">
+    <span>FRETART</span>
+    <span class="dot" aria-hidden="true">●</span>
+    <span>made by <a href="https://thieun.com">Matthew (Thieu) Nguyen</a></span>
+    <span><a href="https://www.youtube.com/@thieu.dachill">YouTube</a> · <a href="https://www.instagram.com/thieu.theguy">Instagram</a></span>
+    <span class="right">MIT license · <a href="https://github.com/thieudachill/fretart">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

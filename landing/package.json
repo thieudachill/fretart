@@ -1,0 +1,17 @@
+{
+  "name": "fretart-landing",
+  "private": true,
+  "version": "1.0.0",
+  "description": "FretArt landing page — Astro static site deployed to Cloudflare Workers",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "astro build && wrangler deploy"
+  },
+  "devDependencies": {
+    "astro": "^5.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

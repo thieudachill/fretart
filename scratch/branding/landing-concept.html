@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FretArt — landing concept board (Phase 8a)</title>
+<style>
+  /* Tokens mirror src/ui/theme.css — The Human Press */
+  :root {
+    --paper: #efe9dc;
+    --paper-deep: #e5dcc9;
+    --ink: #20242c;
+    --ink-soft: #4c505a;
+    --amber: #e8a020;
+    --accent: #c43a2f;
+    --overlap: #8a4326;
+    --off-x: -2px;
+    --off-y: -1px;
+    --hairline: 1px solid #b9ad93;
+    --mono: 'IBM Plex Mono', 'Consolas', monospace;
+    --ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --display: 'Archivo Black', 'Arial Black', 'Segoe UI Black', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #191c22; font-family: var(--ui); color: var(--ink); }
+
+  /* ——— board chrome: dark strips are NOTES TO THIEU, not part of the page ——— */
+  .note {
+    background: #191c22; color: #b9bec9;
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.65;
+    padding: 1.1rem 1.4rem; max-width: 100%;
+  }
+  .note .inner { max-width: 880px; margin: 0 auto; }
+  .note b { color: var(--amber); font-weight: 600; }
+  .note h2 {
+    font-size: 0.72rem; letter-spacing: 0.18em; color: var(--amber);
+    font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase;
+  }
+  .note ul { margin: 0.3rem 0 0.3rem 1.2rem; }
+  .note li { margin-bottom: 0.25rem; }
+  .note table { border-collapse: collapse; margin: 0.5rem 0; }
+  .note td, .note th { border: 1px solid #3a3f4a; padding: 0.25rem 0.7rem; text-align: left; font-weight: 400; }
+  .note th { color: #e8e4da; }
+
+  /* ——— the page itself (cream) ——— */
+  .page { background: var(--paper); }
+  .frame { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  /* top strip */
+  .topstrip { border-bottom: var(--hairline); }
+  .topstrip .frame {
+    display: flex; align-items: center; gap: 0.8rem; padding-top: 0.7rem; padding-bottom: 0.7rem;
+  }
+  .topstrip .markwrap {
+    width: 34px; height: 34px; overflow: hidden; border-radius: 3px;
+    mix-blend-mode: multiply; flex-shrink: 0;
+  }
+  .topstrip img {
+    width: 100%; height: 100%; object-fit: cover;
+    transform: scale(2.6); transform-origin: 52% 48%; /* zoom to the node motif */
+  }
+  .topstrip .name {
+    font-family: var(--mono); font-weight: 600; letter-spacing: 0.22em; font-size: 0.85rem;
+  }
+  .topstrip a {
+    margin-left: auto; font-family: var(--mono); font-size: 0.8rem;
+    color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor;
+  }
+
+  /* hero */
+  .hero video, .hero .videoph { width: 100%; display: block; mix-blend-mode: multiply; }
+  .hero-copy { padding: 3.2rem 0 3.6rem; border-top: var(--hairline); }
+  h1 {
+    font-family: var(--display); font-weight: 900; line-height: 1.04;
+    font-size: clamp(2.4rem, 5.6vw, 4.2rem); letter-spacing: -0.01em;
+    text-shadow: calc(var(--off-x) * 2) calc(var(--off-y) * 2) 0 var(--amber);
+    max-width: 15ch;
+  }
+  .lede {
+    margin-top: 1.4rem; font-size: 1.06rem; line-height: 1.65; color: var(--ink-soft);
+    max-width: 54ch;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; align-items: center; }
+  .clone {
+    font-family: var(--mono); font-size: 0.88rem; background: var(--paper-deep);
+    border: var(--hairline); padding: 0.7rem 1rem; border-radius: 3px;
+  }
+  .clone::before { content: '$ '; color: var(--accent); }
+  .gh {
+    font-family: var(--mono); font-size: 0.88rem; color: var(--paper);
+    background: var(--ink); padding: 0.72rem 1.2rem; border-radius: 3px; text-decoration: none;
+    box-shadow: calc(var(--off-x) * 2) calc(var(--off-y) * 2) 0 var(--amber);
+  }
+
+  /* standing-wave divider (code-drawn, the brand divider) */
+  .wave { display: block; margin: 0 auto; }
+
+  /* feature moments */
+  .moment { padding: 4rem 0; }
+  .moment .frame { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+  .moment.flip .art { order: 2; }
+  .moment .art img { width: 100%; display: block; mix-blend-mode: multiply; }
+  .kicker {
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.24em; color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+  .kicker::before { content: '● '; font-size: 0.6rem; vertical-align: 2px; }
+  .moment h3 {
+    font-family: var(--display); font-weight: 900; font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+    line-height: 1.12; text-shadow: var(--off-x) var(--off-y) 0 var(--amber);
+  }
+  .moment p { margin-top: 0.9rem; color: var(--ink-soft); line-height: 1.65; max-width: 44ch; }
+
+  /* capture-slot placeholder (real recordings drop in here) */
+  .slot {
+    aspect-ratio: 16 / 9; border: 1px dashed #b9ad93; border-radius: 3px;
+    background: var(--paper-deep); display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 1rem;
+  }
+  .slot span { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-soft); line-height: 1.7; }
+  .slot b { color: var(--accent); font-weight: 600; }
+  .moment .slot { margin-top: 1.4rem; }
+
+  /* full-bleed performance band */
+  .band { border-top: var(--hairline); border-bottom: var(--hairline); }
+  .band .slot { aspect-ratio: 21 / 9; border-left: none; border-right: none; border-radius: 0; }
+
+  /* quickstart */
+  .quick { padding: 4.5rem 0; }
+  .quick h3 {
+    font-family: var(--display); font-weight: 900; font-size: clamp(1.6rem, 3vw, 2.3rem);
+    text-shadow: var(--off-x) var(--off-y) 0 var(--amber);
+  }
+  .steps {
+    margin-top: 1.6rem; font-family: var(--mono); font-size: 0.92rem; line-height: 2.1;
+    background: var(--ink); color: var(--paper); padding: 1.3rem 1.6rem; border-radius: 3px;
+    box-shadow: calc(var(--off-x) * 3) calc(var(--off-y) * 3) 0 var(--amber);
+    overflow-x: auto; white-space: nowrap;
+  }
+  .steps .p { color: var(--amber); user-select: none; }
+  .quick .fine { margin-top: 1.3rem; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.7; max-width: 60ch; }
+  .quick .fine code { font-family: var(--mono); background: var(--paper-deep); padding: 0.05rem 0.35rem; border-radius: 3px; }
+
+  /* footer */
+  footer.pagefoot { border-top: var(--hairline); }
+  footer.pagefoot .frame {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.4rem;
+    padding-top: 1.4rem; padding-bottom: 1.6rem;
+    font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft);
+  }
+  footer.pagefoot a { color: var(--accent); text-decoration: none; }
+  footer.pagefoot .dot { color: var(--accent); }
+  footer.pagefoot .right { margin-left: auto; }
+
+  @media (max-width: 760px) {
+    .moment .frame { grid-template-columns: 1fr; gap: 1.6rem; }
+    .moment.flip .art { order: 0; }
+    .frame { padding: 0 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <div class="inner">
+    <h2>Phase 8a — landing page concept board</h2>
+    The <b>cream sections are the page</b>, drafted at full fidelity with real copy and the
+    ungraduated v2 assets. The <b>dark strips (like this one) are notes to you</b> — they will not
+    exist on the real page. Dashed boxes are <b>capture slots</b>: they wait for recordings you make
+    in the app with <b>R</b>/<b>S</b>. Everything here assumes your taste-gate picks are mark-3,
+    wordmark-1, spot-a-2, spot-b-1 and the hero pair — if your verdict differs, the swap is trivial.
+  </div>
+</div>
+
+<!-- ============================ THE PAGE ============================ -->
+
+<div class="page topstrip">
+  <div class="frame">
+    <span class="markwrap"><img src="out/riso2-mark-3.jpg" alt="FretArt mark"></span>
+    <span class="name">FRETART</span>
+    <a href="https://github.com/thieudachill/fretart">GitHub ↗</a>
+  </div>
+</div>
+
+<div class="page hero">
+  <video src="out/riso2-hero-loop.mp4" poster="out/riso2-hero-still-3.jpg" autoplay muted loop playsinline></video>
+  <div class="hero-copy">
+    <div class="frame">
+      <h1>Your fingers are already drawing.</h1>
+      <p class="lede">FretArt turns a webcam and a guitar into live screen-print art —
+      every fingertip tracked, every pluck heard. Free and open source.
+      Runs entirely in your browser; nothing leaves your machine.</p>
+      <div class="cta-row">
+        <span class="clone">git clone https://github.com/thieudachill/fretart</span>
+        <a class="gh" href="https://github.com/thieudachill/fretart">View on GitHub</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <div class="inner">
+    <h2>Note — masthead &amp; hero</h2>
+    <ul>
+      <li>The plan's original hero ("transparent ink video over app footage") died in Phase 5 —
+        gen models output no alpha. Adaptation: <b>the riso loop IS the masthead print</b>, full-bleed;
+        real app footage gets its own full-bleed band further down instead.</li>
+      <li><b>prefers-reduced-motion</b>: video never autoplays, hero-still-3 shows instead. Same swap on
+        data-saver / very slow connections (poster is the LCP either way).</li>
+      <li>All JPEGs sit on <b>mix-blend-mode: multiply</b>, so their cream melts into the page paper —
+        no visible plate edges despite JPEG having no alpha.</li>
+      <li>Headline misregistration is code (text-shadow on the --fa-offset direction, amber, up-left —
+        one direction everywhere, per the discipline rules).</li>
+      <li>Display face: the mock uses your system's heaviest grotesque; the build self-hosts
+        <b>one</b> display weight (~30 KB woff2, Archivo Black or similar) to echo the wordmark.
+        Body text stays on the app's system stack — zero extra font weight.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="page" style="padding: 1.6rem 0 0.4rem;">
+  <svg class="wave" width="360" height="40" viewBox="0 0 360 40" fill="none" aria-hidden="true">
+    <line x1="0" y1="20" x2="60" y2="20" stroke="#20242c" stroke-width="1.5"/>
+    <path d="M60 20 C 105 -8, 135 -8, 180 20 S 255 48, 300 20" stroke="#20242c" stroke-width="1.5"/>
+    <line x1="300" y1="20" x2="360" y2="20" stroke="#20242c" stroke-width="1.5"/>
+    <circle cx="60" cy="20" r="3.5" fill="#c43a2f"/>
+    <circle cx="300" cy="20" r="3.5" fill="#c43a2f"/>
+  </svg>
+</div>
+
+<div class="page moment">
+  <div class="frame">
+    <div class="art"><img src="out/riso2-spot-a-2.jpg" alt="Fretting hand pressing a node"></div>
+    <div>
+      <div class="kicker">01 — HANDS</div>
+      <h3>Every fingertip, tracked live.</h3>
+      <p>Twenty-one points per hand, smoothed and anticipated, so the lines land where
+      your fingers are — not where they were.</p>
+      <div class="slot"><span><b>CAPTURE SLOT</b><br>preset “Line Drawing” · snapshot or short clip<br>record with <b>S</b>/<b>R</b> on your rig</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="page moment flip">
+  <div class="frame">
+    <div class="art"><img src="out/riso2-spot-b-1.jpg" alt="Releasing hand over rosette arcs"></div>
+    <div>
+      <div class="kicker">02 — SOUND</div>
+      <h3>It listens while it watches.</h3>
+      <p>Level, pluck attack, register — the mic routes to any visual parameter.
+      Notes bloom the instant you play them.</p>
+      <div class="slot"><span><b>CAPTURE SLOT</b><br>preset “Pluck Bloom” · clip with sound on<br>record with <b>R</b> on your rig</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="page moment flip">
+  <div class="frame">
+    <div class="art"><img src="out/riso2-splash-1.jpg" alt="Sound spreading through matter"></div>
+    <div>
+      <div class="kicker">03 — PRINT</div>
+      <h3>A print shop at 60 fps.</h3>
+      <p>Halftone, misregistration, folded paper — screen-print craft,
+      redrawn live in WebGL.</p>
+      <div class="slot"><span><b>CAPTURE SLOT</b><br>preset “Print Pyramid” or “Print Window”<br>snapshot with <b>S</b></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <div class="inner">
+    <h2>Note — the three moments</h2>
+    <ul>
+      <li>Each moment pairs a <b>spot illustration (the promise)</b> with a <b>real capture (the proof)</b>.
+        The page stays honest: illustration never pretends to be a screenshot.</li>
+      <li>Art sides run left, right, right — the alternation breaks exactly once, at 03 —
+        discipline rule 2: repetition with one variation.</li>
+      <li>03 uses riso2-splash-1 ("sound spreading through matter") as its spot. If it reads too
+        abstract next to the two hands, fallback: lead 03 with the capture and drop the spot.</li>
+      <li>Suggested captures: Line Drawing still (S), Pluck Bloom clip with audio (R),
+        Print Pyramid still (S) — your call, slots take either.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="page band">
+  <div class="slot"><span><b>IN PERFORMANCE — FULL-BLEED CAPTURE</b><br>one real recording, any preset you love, 10–20 s loop, muted ·
+  this is where the app itself takes over the page</span></div>
+</div>
+
+<div class="page quick">
+  <div class="frame">
+    <h3>On stage in two minutes.</h3>
+    <div class="steps">
+      <span class="p">$</span> git clone https://github.com/thieudachill/fretart<br>
+      <span class="p">$</span> cd fretart &amp;&amp; npm install<br>
+      <span class="p">$</span> npm run dev
+    </div>
+    <p class="fine">Chrome or Edge, a webcam, and light on your hands. Setup fetches the
+    hand-tracking model once; after that everything runs locally. Press <code>?</code> in the
+    app for the keys.</p>
+  </div>
+</div>
+
+<div class="page pagefoot" style="padding:0;"><footer class="pagefoot">
+  <div class="frame">
+    <span>FRETART</span>
+    <span class="dot">●</span>
+    <span>made by <a href="https://thieun.com">Matthew (Thieu) Nguyen</a></span>
+    <span><a href="https://www.youtube.com/@thieu.dachill">YouTube</a> · <a href="https://www.instagram.com/thieu.theguy">Instagram</a></span>
+    <span class="right">MIT license · <a href="https://github.com/thieudachill/fretart">GitHub</a></span>
+  </div>
+</footer></div>
+
+<!-- ============================ BUILD SPEC ============================ -->
+
+<div class="note" style="padding-bottom: 0.2rem;">
+  <div class="inner">
+    <h2>Build spec (8b, after your go)</h2>
+    <ul>
+      <li><b>Stack</b>: Astro static site in <b>landing/</b> (own package.json; root repo stays the app).
+        Zero client JS except the video lazy-load — the page is genuinely a printed sheet.</li>
+      <li><b>Deploy</b>: wrangler → Cloudflare Workers static assets; GitHub Action redeploys on
+        <b>landing/**</b> changes. Targets: Lighthouse ≥95 perf/a11y, loads on a phone.</li>
+      <li><b>Weight budget</b> (target ≤ 2.5 MB, hero loop dominates):</li>
+    </ul>
+    <table>
+      <tr><th>asset</th><th>now (jpg/mp4)</th><th>shipped as</th></tr>
+      <tr><td>hero loop</td><td>1.11 MB (1080p8s h264)</td><td>as-is ≈ 1.1 MB (+AV1 source later if we care)</td></tr>
+      <tr><td>hero still (poster)</td><td>425 KB</td><td>webp ≈ 60 KB</td></tr>
+      <tr><td>2 spots + splash</td><td>1.76 MB</td><td>webp ≈ 150 KB total</td></tr>
+      <tr><td>mark</td><td>627 KB</td><td>webp, 128px ≈ 8 KB</td></tr>
+      <tr><td>display font</td><td>—</td><td>1 woff2 ≈ 30 KB</td></tr>
+      <tr><td>your captures</td><td>—</td><td>3 stills/clips, budget ≈ 500 KB</td></tr>
+    </table>
+    <ul>
+      <li><b>Asset graduation</b>: build waits on your taste-gate verdict; picks move to
+        <b>public/brand/</b> (app) and <b>landing/src/assets/</b> by hand, then get committed —
+        first time any generated asset enters the repo.</li>
+    </ul>
+    <h2 style="margin-top:1rem;">Your three calls before 8b</h2>
+    <ul>
+      <li><b>1 — This concept</b>: layout, copy, the three moments, the adaptation of the hero. Notes welcome per section.</li>
+      <li><b>2 — Taste gate (carried from Phase 5)</b>: verdict on the v2 set via contact-sheet.html — this board doubles as seeing the assets in situ.</li>
+      <li><b>3 — Domain</b>: fretart.&lt;your-domain&gt; vs the free *.workers.dev URL. (No hosted app demo per the clone-and-run decision — say if you've changed your mind.)</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

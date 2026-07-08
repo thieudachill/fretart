@@ -1,0 +1,9 @@
+// Cloudflare Workers static-assets deploy for the landing page.
+// `npm run deploy` builds then ships ./dist. No worker script — assets only.
+{
+  "name": "fretart",
+  "compatibility_date": "2026-07-08",
+  "assets": {
+    "directory": "./dist"
+  }
+}

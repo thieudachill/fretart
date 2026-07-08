@@ -166,8 +166,9 @@ the preferred direction.
   in `main.ts`; consumed by the Phase-6 UI + landing.
 - `scripts/genAsset.mjs` — CLI for brand illustration/video via Gemini
   (`GEMINI_API_KEY` + model ids in `.env`, never committed). Output goes to
-  `scratch/branding/out/` (git-ignored); curated picks graduate to
-  `public/brand/` by hand after the user taste gate. Research, art direction,
+  `scratch/branding/out/` (git-ignored); curated picks graduated to
+  `public/brand/` 2026-07-08 as quality-first webp + hero-loop.mp4 (mp4 is
+  git-ignored globally — `git add -f` when it changes). Research, art direction,
   prompt rules + QC rubric: `scratch/branding/NOTES.md`; per-asset attempt log:
   `scratch/branding/ATTEMPTS.md`; review page: `scratch/branding/contact-sheet.html`.
 - Hard-won API constraints (verified live 2026-07-07): image model outputs
@@ -208,6 +209,27 @@ the preferred direction.
   the system Chrome against `npm run dev` `?sim` — screenshot the bar,
   popover, help card, and filming mode, and check the console for errors.
   This caught the `P`-leak bug; recreate the small script when UI changes.
+
+## Landing page (Phase 8)
+
+- `landing/` — separate Astro static site (own package.json), deployed to
+  Cloudflare Workers static assets: https://fretart.nguyenthaithieu.workers.dev
+  (`landing/wrangler.jsonc`; `npm run deploy` from `landing/`, or CI redeploys
+  on `landing/**` pushes via `deploy-landing.yml` — needs `CLOUDFLARE_API_TOKEN`
+  + `CLOUDFLARE_ACCOUNT_ID` repo secrets). Built 1:1 from the Phase-8a concept
+  board (`scratch/branding/landing-concept.html`).
+- One page, zero client JS except the hero-video motion gate (sets autoplay +
+  load() rather than racing play() at parse time; no autoplay under
+  `prefers-reduced-motion`/data-saver — poster = hero still). CSS tokens mirror
+  `theme.css`; small text uses `--accent-text #b0332a` (accent darkened one
+  step for AA contrast on paper), decorative accents keep `--accent`.
+- `landing/public/brand/` holds size-tuned webp derivatives of `public/brand/`
+  (regenerate with ffmpeg from `scratch/branding/out/` originals). Weight
+  budget ≤2.5 MB — currently 1.39 MB (hero loop = 1.13 MB). Lighthouse
+  100/100/100/100; keep it there. Commented `CAPTURE SLOT` markers in
+  `index.astro` await real R/S recordings (three moments + a full-bleed
+  IN PERFORMANCE band). Headless QC gotcha: headless Chrome defaults to
+  `prefers-reduced-motion: reduce` — emulate `no-preference` to test autoplay.
 
 ## Gotchas
 
